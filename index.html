@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>Живий генератор туманностей</title>
+<title>Живий генератор туманностей JWST-style</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body {margin:0;padding:0;background:#000;overflow:hidden;font-family:Inter, monospace;}
@@ -56,30 +56,44 @@ class Perlin {
 }
 const perlin = new Perlin();
 
-// -------------------- Nebula Generation --------------------
-let t = 0;
+// -------------------- Nebula Layers --------------------
+const layers = [
+    {scale:0.003, speed:0.0005, colorFactor:[200,100,255]},
+    {scale:0.006, speed:0.0003, colorFactor:[150,200,255]},
+    {scale:0.01,  speed:0.0001, colorFactor:[255,180,200]}
+];
+
+let t=0;
+
 function drawNebula() {
     const img = ctx.createImageData(width,height);
     const data = img.data;
+
     for(let y=0;y<height;y++){
         for(let x=0;x<width;x++){
-            const idx = (y*width+x)*4;
-            // Зсув координат для руху “на глядача”
-            let nx = (x - width/2)/width*2;
-            let ny = (y - height/2)/height*2 - t*0.001; // рух вперед
-            let n = perlin.noise(nx*1.5, ny*1.5)*0.5+0.5;
-            // Градієнт кольору JWST/Hubble
-            let r = Math.floor(n*200 + Math.sin(t*0.0005)*50);
-            let g = Math.floor(n*150 + Math.cos(t*0.0003)*50);
-            let b = Math.floor(n*255 + Math.sin(t*0.0002)*50);
-            data[idx] = r;
-            data[idx+1] = g;
-            data[idx+2] = b;
+            const idx=(y*width+x)*4;
+            let r=0,g=0,b=0;
+
+            for(let l=0;l<layers.length;l++){
+                const layer = layers[l];
+                let nx = (x - width/2)/width*2;
+                let ny = (y - height/2)/height*2 - t*layer.speed; // рух вперед
+                let n = perlin.noise(nx/layer.scale, ny/layer.scale)*0.5+0.5;
+                r += n*layer.colorFactor[0];
+                g += n*layer.colorFactor[1];
+                b += n*layer.colorFactor[2];
+            }
+
+            // normalize values
+            data[idx] = Math.min(255, r);
+            data[idx+1] = Math.min(255, g);
+            data[idx+2] = Math.min(255, b);
             data[idx+3] = 255;
         }
     }
+
     ctx.putImageData(img,0,0);
-    t += 1; // повільний рух вперед
+    t+=1; // повільний рух вперед
     requestAnimationFrame(drawNebula);
 }
 
@@ -92,5 +106,6 @@ window.addEventListener('resize',()=>{
 // -------------------- Start --------------------
 drawNebula();
 </script>
+
 </body>
 </html>
