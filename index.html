@@ -2,185 +2,220 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>Cosmic & Geomagnetic Monitor</title>
+<title>ibonarium :: jwst slow modes</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
 
 <style>
+*{margin:0;padding:0;box-sizing:border-box}
 html,body{
-  margin:0;
-  padding:0;
-  background:#000;
-  color:#d8f3ff;
-  font-family:Inter,system-ui,monospace;
+    width:100%;
+    height:100%;
+    background:#000;
+    color:#cfefff;
+    font-family:Inter,system-ui,monospace;
+    overflow:hidden;
 }
-.container{
-  max-width:900px;
-  margin:auto;
-  padding:12px;
+
+/* ===== JWST BACKGROUND ===== */
+#jwst-bg{
+    position:fixed;
+    inset:0;
+    background-size:cover;
+    background-position:center;
+    transform:scale(1);
+    transition:opacity 2s ease, filter 1.5s ease;
+    opacity:0;
+    filter:brightness(0.85) contrast(1.05);
+    will-change:transform;
 }
-h1{
-  font-size:20px;
-  margin-bottom:10px;
+
+@keyframes driftSoft{
+    0%{transform:scale(1)}
+    100%{transform:scale(1.01)}
 }
-.grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:6px;
+
+@keyframes driftMedium{
+    0%{transform:scale(1) translate(0,0)}
+    50%{transform:scale(1.02) translate(-1%,-1%)}
+    100%{transform:scale(1.01) translate(1%,1%)}
 }
-.item{
-  background:#050c14;
-  border:1px solid #123;
-  border-radius:6px;
-  padding:8px;
-  font-size:14px;
+
+/* ===== IR FILTER ===== */
+.ir{
+    filter:
+        brightness(0.9)
+        contrast(1.2)
+        saturate(1.4)
+        hue-rotate(35deg);
 }
-.value{
-  float:right;
-  font-weight:600;
+
+/* ===== OVERLAY ===== */
+#overlay{
+    position:fixed;
+    inset:0;
+    background:radial-gradient(circle at center, rgba(0,0,0,0.2), #000 80%);
+    pointer-events:none;
 }
-canvas{
-  width:100%;
-  height:160px;   /* 🔽 зменшено */
-  margin-top:10px;
-  background:#03070c;
-  border:1px solid #123;
-  border-radius:6px;
+
+/* ===== UI ===== */
+#controls{
+    position:absolute;
+    top:20px;
+    left:20px;
+    display:flex;
+    gap:8px;
 }
-.status{
-  margin-top:10px;
-  padding:10px;
-  background:#08121c;
-  border-radius:6px;
+
+button{
+    background:rgba(0,0,0,0.45);
+    border:1px solid rgba(255,255,255,0.15);
+    color:#cfefff;
+    padding:6px 10px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:13px;
 }
+
+button.active{
+    border-color:#fff;
+    color:#fff;
+}
+
+#panel{
+    position:absolute;
+    bottom:20px;
+    left:20px;
+    background:rgba(0,0,0,0.45);
+    backdrop-filter:blur(6px);
+    padding:14px 18px;
+    border-radius:12px;
+    font-size:14px;
+    line-height:1.5;
+    max-width:420px;
+}
+
+#panel b{color:#fff}
 </style>
 </head>
 
 <body>
-<div class="container">
-<h1>КОСМІЧНІ ТА ГЕОМАГНІТНІ ПОКАЗНИКИ</h1>
 
-<div class="grid" id="data"></div>
+<div id="jwst-bg"></div>
+<div id="overlay"></div>
 
-<canvas id="chart"></canvas>
+<div id="controls">
+    <button onclick="setMode('silence')">Тиша</button>
+    <button onclick="setMode('memory')">Памʼять</button>
+    <button onclick="setMode('novelty')">Новизна</button>
+    <button onclick="toggleIR()">IR</button>
+</div>
 
-<div class="status" id="status"></div>
+<div id="panel">
+    <b>JWST Slow Observer</b><br>
+    Режим: <span id="modeLabel"></span><br>
+    <span id="meta"></span>
 </div>
 
 <script>
-const dataEl = document.getElementById("data");
-const statusEl = document.getElementById("status");
-const ctx = document.getElementById("chart").getContext("2d");
+const CACHE_KEY = "jwst_mode_cache";
+let currentMode = "memory";
+let irEnabled = false;
 
-function safe(n){ return isFinite(n) ? n : 0 }
-
-function extractKp(data){
-  for(let i=data.length-1;i>=0;i--){
-    const v = Number(data[i][1]);
-    if (isFinite(v)) return v;
-  }
-  return 0;
+function cacheDuration(mode){
+    if(mode==="silence") return 72*60*60*1000;
+    if(mode==="novelty") return 6*60*60*1000;
+    return 24*60*60*1000;
 }
 
-async function load(){
+async function loadJWST(){
+    const cached = localStorage.getItem(CACHE_KEY);
+    if(cached){
+        const data = JSON.parse(cached);
+        if(Date.now()-data.time < cacheDuration(data.mode)){
+            apply(data);
+            return;
+        }
+    }
 
-  const plasma = await fetch(
-    "https://services.swpc.noaa.gov/json/solar-wind/plasma-1-day.json"
-  ).then(r=>r.json());
+    const page = currentMode==="memory"
+        ? Math.floor(Math.random()*50)+1
+        : 1;
 
-  const mag = await fetch(
-    "https://services.swpc.noaa.gov/json/solar-wind/mag-1-day.json"
-  ).then(r=>r.json());
+    const query = {
+        service:"Mast.Caom.Filtered",
+        params:{
+            columns:"obs_id,target_name,instrument_name,release_date",
+            filters:[
+                {paramName:"obs_collection",values:["JWST"]},
+                {paramName:"dataproduct_type",values:["image"]},
+                {paramName:"dataRights",values:["PUBLIC"]}
+            ]
+        },
+        format:"json",
+        pagesize:1,
+        page:page
+    };
 
-  const kpRaw = await fetch(
-    "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
-  ).then(r=>r.json());
+    const res = await fetch("https://mast.stsci.edu/api/v0/invoke",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify(query)
+    });
 
-  const p = plasma.at(-1);
-  const m = mag.at(-1);
+    const json = await res.json();
+    if(!json.data?.length) return;
 
-  const speed = safe(Number(p.speed));
-  const density = safe(Number(p.density));
-  const temp = safe(Number(p.temperature));
+    const obs = json.data[0];
+    const img =
+        `https://mast.stsci.edu/portal/Download/file/JWST/product/${obs.obs_id}_i2d.jpg`;
 
-  const bt = safe(Number(m.bt));
-  const bz = safe(Number(m.bz));
-  const by = safe(Number(m.by));
+    const payload = {
+        img,
+        target:obs.target_name,
+        instrument:obs.instrument_name,
+        release:obs.release_date,
+        mode:currentMode,
+        time:Date.now()
+    };
 
-  const kp = extractKp(kpRaw);
-
-  const pressure =
-    1.6726e-6 * density * speed * speed;
-
-  const GSI =
-    Math.abs(bz)*0.4 +
-    bt*0.2 +
-    (speed/400)*0.2 +
-    (density/10)*0.1 +
-    kp*0.1;
-
-  const storm =
-    GSI>8?"G5 Extreme":
-    GSI>6?"G4 Strong":
-    GSI>4?"G3 Elevated":
-    GSI>2?"G2 Mild":"G0 Quiet";
-
-  const rows = [
-    ["Solar Wind Speed (km/s)", speed.toFixed(1)],
-    ["Solar Wind Density (/cc)", density.toFixed(2)],
-    ["Solar Wind Temperature (K)", temp.toFixed(0)],
-    ["IMF Bt – Total Magnetic Field (nT)", bt.toFixed(2)],
-    ["IMF Bz (nT)", bz.toFixed(2)],
-    ["IMF By (nT)", by.toFixed(2)],
-    ["Solar Wind Dynamic Pressure (nPa)", pressure.toFixed(2)],
-    ["Proton Flux >10 MeV", "SWPC GOES"],
-    ["Electron Flux >2 MeV", "SWPC GOES"],
-    ["Kp Index", kp.toFixed(2)],
-    ["Dst Index (nT)", "NOAA realtime"],
-    ["AE Index", "Auroral activity active"],
-    ["Geomagnetic Stress Index (GSI)", GSI.toFixed(2)],
-    ["Geomagnetic Storm Level (G1–G5)", storm]
-  ];
-
-  dataEl.innerHTML="";
-  rows.forEach(r=>{
-    const d=document.createElement("div");
-    d.className="item";
-    d.innerHTML=`${r[0]}<span class="value">${r[1]}</span>`;
-    dataEl.appendChild(d);
-  });
-
-  drawChart(speed, bt, bz, kp, GSI);
-
-  statusEl.innerHTML =
-    `<b>System State:</b> ${storm}<br>
-     <b>Kp:</b> ${kp.toFixed(2)} |
-     <b>GSI:</b> ${GSI.toFixed(2)}`;
+    localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+    apply(payload);
 }
 
-function drawChart(speed, bt, bz, kp, gsi){
-  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+function apply(d){
+    const bg = document.getElementById("jwst-bg");
+    bg.style.backgroundImage = `url(${d.img})`;
+    bg.style.opacity = "1";
 
-  const values=[speed/10, bt, Math.abs(bz), kp*10, gsi*10];
-  const labels=["V","Bt","|Bz|","Kp","GSI"];
+    bg.style.animation =
+        d.mode==="silence"
+            ? "driftSoft 300s linear infinite"
+            : "driftMedium 180s linear infinite";
 
-  const w=ctx.canvas.width;
-  const h=ctx.canvas.height;
-  const step=w/(values.length+1);
+    document.getElementById("modeLabel").textContent =
+        d.mode==="silence"?"Тиша":d.mode==="memory"?"Памʼять":"Новизна";
 
-  ctx.strokeStyle="#39f";
-  ctx.beginPath();
-  values.forEach((v,i)=>{
-    const x=step*(i+1);
-    const y=h - v;
-    if(i===0) ctx.moveTo(x,y);
-    else ctx.lineTo(x,y);
-    ctx.fillText(labels[i],x-6,h-4);
-  });
-  ctx.stroke();
+    document.getElementById("meta").innerHTML =
+        `Ціль: ${d.target}<br>
+         Інструмент: ${d.instrument}<br>
+         Реліз: ${d.release}`;
 }
 
-load();
-setInterval(load,60000);
+function setMode(m){
+    currentMode = m;
+    document.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
+    event.target.classList.add("active");
+    loadJWST();
+}
+
+function toggleIR(){
+    irEnabled = !irEnabled;
+    document.getElementById("jwst-bg").classList.toggle("ir", irEnabled);
+}
+
+loadJWST();
 </script>
+
 </body>
 </html>
