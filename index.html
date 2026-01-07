@@ -2,112 +2,110 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>Mauna Kea Live Gallery</title>
+<title>Живий генератор туманностей</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body {
-    margin:0;
-    padding:0;
-    background:#000;
-    font-family:Inter, monospace;
-    overflow:hidden;
-    height:100vh;
+body {margin:0;padding:0;background:#000;overflow:hidden;font-family:Inter, monospace;}
+#controls {
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.45); backdrop-filter:blur(6px);
+    padding:8px 12px; border-radius:10px; z-index:10; color:#cfefff;
 }
-
-#panel {
-    position:absolute;
-    top:10px;
-    left:50%;
-    transform:translateX(-50%);
-    background:rgba(0,0,0,0.45);
-    backdrop-filter:blur(6px);
-    padding:12px 16px;
-    border-radius:12px;
-    font-size:14px;
-    text-align:center;
-    z-index:10;
-    color:#cfefff;
-}
-
-#live-image {
-    position:fixed;
-    top:0;
-    left:0;
-    width:100vw;
-    height:100vh;
-    object-fit:cover; /* займатиме весь екран */
-    transition: opacity 0.8s ease, filter 0.5s ease;
-    z-index:0;
-}
-
-button {
-    margin-top:6px;
-    background:rgba(0,0,0,0.45);
-    border:1px solid rgba(255,255,255,0.15);
-    color:#cfefff;
-    padding:6px 10px;
-    border-radius:10px;
-    cursor:pointer;
-}
-
-button.active { border-color:#fff; color:#fff; }
-a { color:#cfefff; text-decoration:none; }
+button {margin:2px;padding:6px 10px;border-radius:8px;cursor:pointer;background:rgba(0,0,0,0.5);color:#cfefff;border:1px solid #fff2;}
+button.active {border-color:#fff;color:#fff;}
+canvas {display:block;}
 </style>
 </head>
 <body>
-
-<div id="panel">
-    <b>Live Night Sky – Mauna Kea Observatory</b><br>
-    Джерело: <a href="https://www.ifa.hawaii.edu/info/livecams/" target="_blank">ifa.hawaii.edu</a><br>
-    <span id="cam-name">Камера: --</span><br>
-    <span id="time">UTC: --:--:--</span><br>
+<div id="controls">
     <button id="toggleIR">IR / Контраст</button>
 </div>
-
-<img id="live-image" src="" alt="Night Sky Live">
+<canvas id="nebula"></canvas>
 
 <script>
-// ---- Масив камер ----
-const cams = [
-    {name:"Keck 1", url:"https://www.ifa.hawaii.edu/info/livecams/images/keck_1.jpg"},
-    {name:"Keck 2", url:"https://www.ifa.hawaii.edu/info/livecams/images/keck_2.jpg"},
-    {name:"Subaru", url:"https://www.ifa.hawaii.edu/info/livecams/images/subaru.jpg"}
-];
+// -------------------- Setup --------------------
+const canvas = document.getElementById('nebula');
+const ctx = canvas.getContext('2d');
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
 
-const img = document.getElementById('live-image');
-const camLabel = document.getElementById('cam-name');
-
-// ---- IR / Contrast ----
 let irOn = false;
-document.getElementById('toggleIR').addEventListener('click', ()=>{
-    irOn = !irOn;
-    img.style.filter = irOn
-        ? 'brightness(0.8) contrast(1.5) saturate(1.2) hue-rotate(30deg)'
-        : 'brightness(1) contrast(1) saturate(1)';
-});
+document.getElementById('toggleIR').addEventListener('click', ()=>{ irOn=!irOn; });
 
-// ---- Функція оновлення камери ----
-function updateCam() {
-    const cam = cams[Math.floor(Math.random() * cams.length)];
-    camLabel.textContent = `Камера: ${cam.name}`;
-    
-    img.style.opacity = 0;
-    setTimeout(()=>{
-        img.src = cam.url + '?t=' + new Date().getTime(); // обход кешу
-        img.style.opacity = 1;
-    }, 500);
-    
-    // Оновлюємо UTC час
-    const now = new Date();
-    const pad = (n) => n.toString().padStart(2,'0');
-    document.getElementById('time').textContent = `UTC: ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}`;
+// -------------------- Perlin Noise --------------------
+class Perlin {
+    constructor() {
+        this.grad3 = [
+            [1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],
+            [1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],
+            [0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]
+        ];
+        this.p = [];
+        for(let i=0;i<256;i++){this.p[i]=Math.floor(Math.random()*256);}
+        this.perm = [];
+        for(let i=0;i<512;i++){this.perm[i]=this.p[i & 255];}
+    }
+    dot(g,x,y){return g[0]*x+g[1]*y;}
+    fade(t){return t*t*t*(t*(t*6-15)+10);}
+    lerp(a,b,t){return a+(b-a)*t;}
+    noise(x,y){
+        let X=Math.floor(x)&255;
+        let Y=Math.floor(y)&255;
+        x-=Math.floor(x); y-=Math.floor(y);
+        let u=this.fade(x), v=this.fade(y);
+        let g00=this.grad3[this.perm[X+this.perm[Y]] %12];
+        let g01=this.grad3[this.perm[X+this.perm[Y+1]] %12];
+        let g10=this.grad3[this.perm[X+1+this.perm[Y]] %12];
+        let g11=this.grad3[this.perm[X+1+this.perm[Y+1]] %12];
+        let n00=this.dot(g00,x,y);
+        let n10=this.dot(g10,x-1,y);
+        let n01=this.dot(g01,x,y-1);
+        let n11=this.dot(g11,x-1,y-1);
+        let nx0=this.lerp(n00,n10,u);
+        let nx1=this.lerp(n01,n11,u);
+        return this.lerp(nx0,nx1,v);
+    }
+}
+const perlin = new Perlin();
+
+// -------------------- Generate nebula --------------------
+let t=0;
+function drawNebula() {
+    const img = ctx.createImageData(width,height);
+    const data = img.data;
+    for(let y=0;y<height;y++){
+        for(let x=0;x<width;x++){
+            const idx=(y*width+x)*4;
+            let n = perlin.noise(x*0.005, y*0.005 + t)*0.5 +0.5; // 0-1
+            // Градієнт Hubble style
+            let r = Math.floor(n*200 + Math.sin(t*0.3)*50);
+            let g = Math.floor(n*150 + Math.cos(t*0.2)*50);
+            let b = Math.floor(n*255 + Math.sin(t*0.1)*50);
+            data[idx] = r;
+            data[idx+1] = g;
+            data[idx+2] = b;
+            data[idx+3] = 255;
+        }
+    }
+    ctx.putImageData(img,0,0);
+    if(irOn){
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.filter='brightness(0.8) contrast(1.5) saturate(1.2) hue-rotate(30deg)';
+        ctx.drawImage(canvas,0,0);
+        ctx.filter='none';
+    }
+    t+=0.5; // рух газів
+    requestAnimationFrame(drawNebula);
 }
 
-// ---- Автооновлення кожні 10 секунд ----
-updateCam();
-setInterval(updateCam, 10000);
-</script>
+// -------------------- Resize --------------------
+window.addEventListener('resize',()=>{
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+});
 
+// -------------------- Start --------------------
+drawNebula();
+</script>
 </body>
 </html>
