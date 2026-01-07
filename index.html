@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Живий Космос :: JWST Gallery</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{
@@ -13,7 +12,6 @@ html,body{
     font-family:Inter,system-ui,monospace;
     overflow:hidden;
 }
-
 #jwst-bg{
     position:fixed;inset:0;
     background-size:cover;
@@ -21,26 +19,20 @@ html,body{
     opacity:0;
     transition:opacity 2s ease;
 }
-
 #overlay{
-    position:fixed;inset:0;
-    background:radial-gradient(circle at center, rgba(0,0,0,0.25), #000 80%);
+    position:fixed;inset:0;background:radial-gradient(circle at center, rgba(0,0,0,0.25), #000 80%);
     pointer-events:none;
 }
-
 #panel{
     position:absolute;bottom:16px;left:16px;
     background:rgba(0,0,0,0.45);
     backdrop-filter:blur(6px);
-    padding:12px 16px;
-    border-radius:12px;
-    font-size:14px;
-    line-height:1.5;
+    padding:12px 16px;border-radius:12px;
+    font-size:14px;line-height:1.5;
     max-width:420px;
 }
 </style>
 </head>
-
 <body>
 
 <div id="jwst-bg"></div>
@@ -52,35 +44,32 @@ html,body{
 </div>
 
 <script>
-// ===========================
-// Масив прев’ю JWST фото
-// ===========================
+// Масив реально доступних прев’ю JWST
 const images = [
     {
-        url: "https://jwst-previews.s3.amazonaws.com/nircam/miri1.jpg",
-        title: "NGC 3324",
+        url: "https://www.nasa.gov/sites/default/files/thumbnails/image/webb_first_deep_field_0.jpg",
+        title: "Webb First Deep Field",
         instrument: "NIRCam",
         date: "2022-07-12"
     },
     {
-        url: "https://jwst-previews.s3.amazonaws.com/nircam/miri2.jpg",
+        url: "https://www.nasa.gov/sites/default/files/thumbnails/image/potw2246a.jpg",
         title: "Stephan's Quintet",
         instrument: "MIRI",
         date: "2022-07-15"
     },
     {
-        url: "https://jwst-previews.s3.amazonaws.com/nircam/miri3.jpg",
+        url: "https://www.nasa.gov/sites/default/files/thumbnails/image/potw2243a.jpg",
         title: "Carina Nebula",
         instrument: "NIRISS",
         date: "2022-07-20"
     },
     {
-        url: "https://jwst-previews.s3.amazonaws.com/nircam/miri4.jpg",
+        url: "https://www.nasa.gov/sites/default/files/thumbnails/image/potw2247a.jpg",
         title: "SMACS 0723",
         instrument: "NIRCam",
         date: "2022-07-22"
     }
-    // Можна додати ще URL прев’ю JWST
 ];
 
 let currentIndex = 0;
@@ -92,13 +81,11 @@ function showImage(idx){
     const item = images[idx];
     if(!item) return;
 
-    // Fade out
-    bg.style.opacity = 0;
+    bg.style.opacity = 0; // fade out
     setTimeout(()=>{
         bg.style.backgroundImage = `url(${item.url})`;
         meta.innerHTML = `Назва: ${item.title}<br>Камера: ${item.instrument}<br>Дата: ${item.date}`;
-        // Fade in
-        bg.style.opacity = 1;
+        bg.style.opacity = 1; // fade in
     },500);
 }
 
@@ -110,7 +97,7 @@ function nextImage(){
 
 // Перший показ
 showImage(currentIndex);
-setInterval(nextImage, 60000); // 60 секунд
+setInterval(nextImage, 60000);
 </script>
 
 </body>
