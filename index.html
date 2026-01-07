@@ -2,16 +2,16 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>ibonarium :: JWST slow modes</title>
+<title>ibonarium :: JWST API key mode</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#000;color:#cfefff;font-family:Inter,system-ui,monospace;overflow:hidden;}
 
-#jwst-bg{position:fixed;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 2s ease, filter .8s ease;}
+#jwst-bg{position:fixed;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.8s ease, filter .8s ease;}
 
-.ir{filter:brightness(0.85)contrast(1.2)saturate(1.4)hue-rotate(35deg);}
+.ir{filter:brightness(0.85)contrast(1.25)saturate(1.3)hue-rotate(35deg);}
 
 #overlay{position:fixed;inset:0;background:radial-gradient(circle at center,rgba(0,0,0,0.25),#000 80%);pointer-events:none;}
 
@@ -36,56 +36,68 @@ button.active{border-color:#fff;color:#fff;}
 </div>
 
 <div id="panel">
-    <b>JWST Slow Observer</b><br>
-    Режим: <span id="modeText"></span><br>
+    <b>JWST Observer</b><br>
+    Режим: <span id="modeLabel"></span><br>
     <span id="meta"></span>
 </div>
 
 <script>
-let mode="memory", ir=false;
-const modes = {
-  silence: {count:1},
-  memory: {count:6},
-  novelty: {count:6}
-};
+const API_KEY = "a1686b45-a59a-478c-85a3-cc44c95ea90e"; // твій API ключ
+let currentMode = "memory";
+let irOn = false;
 
+// встановлюємо режим
 function setMode(m){
-    mode=m;
-    document.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
-    event.target.classList.add('active');
-    loadImages();
+    currentMode = m;
+    document.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
+    event.target.classList.add("active");
+    fetchImages();
 }
 
 function toggleIR(){
-  ir=!ir;
-  document.getElementById('jwst-bg').classList.toggle('ir',ir);
+    irOn = !irOn;
+    document.getElementById("jwst-bg").classList.toggle("ir", irOn);
 }
 
-async function loadImages(){
-  document.getElementById('modeText').textContent = mode;
-  const res = await fetch("https://yuval-harpaz.github.io/astro/jwst_latest_release.json");
-  const all = await res.json();
+// завантажити фото
+async function fetchImages(){
+    document.getElementById("modeLabel").textContent = currentMode;
 
-  let pick;
-  if(mode==="silence"){
-    pick = all[0];
-  } else {
-    const list = all.slice(0, modes[mode].count);
-    pick = list[Math.floor(Math.random()*list.length)];
-  }
+    // ключ + URL
+    const url = `https://jwstapi.com/api/v1/images?key=${API_KEY}&limit=50`;
+    const res = await fetch(url);
+    const json = await res.json();
 
-  show(pick);
+    if(!json || !json.data || !json.data.length) return;
+
+    let selected;
+
+    if(currentMode === "novelty"){
+        // найновіше — перший
+        selected = json.data[0];
+    } else if(currentMode === "memory"){
+        // випадкове з перших 30
+        selected = json.data[Math.floor(Math.random() * Math.min(json.data.length,30))];
+    } else {
+        // Тиша — найспокійніший (останній у списку)
+        selected = json.data[json.data.length - 1];
+    }
+
+    showImage(selected);
 }
 
-function show(item){
-  const bg = document.getElementById("jwst-bg");
-  bg.style.backgroundImage = `url(${item.img})`;
-  bg.style.opacity="1";
-  document.getElementById("meta").innerHTML=
-    `Назва: ${item.title}<br>Інструмент: ${item.instrument}<br>Дата: ${item.date}`;
+function showImage(item){
+    const bg = document.getElementById("jwst-bg");
+    bg.style.backgroundImage = `url(${item.imageUrl})`;
+    bg.style.opacity = "1";
+
+    document.getElementById("meta").innerHTML =
+        `Назва: ${item.title || "—"}<br>
+         Камера: ${item.instrument || "—"}<br>
+         Дата: ${item.obsDate || "—"}`;
 }
 
-loadImages();
+fetchImages();
 </script>
 
 </body>
