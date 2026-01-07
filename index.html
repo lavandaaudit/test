@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>ibonarium :: JWST Live Viewer</title>
+<title>Живий Космос :: JWST Gallery</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -19,37 +19,13 @@ html,body{
     background-size:cover;
     background-position:center;
     opacity:0;
-    transition:opacity 2s ease, filter 1s ease;
-}
-
-.ir{
-    filter:brightness(0.85) contrast(1.25) saturate(1.3) hue-rotate(35deg);
+    transition:opacity 2s ease;
 }
 
 #overlay{
     position:fixed;inset:0;
     background:radial-gradient(circle at center, rgba(0,0,0,0.25), #000 80%);
     pointer-events:none;
-}
-
-#controls{
-    position:absolute;top:16px;left:16px;
-    display:flex;gap:8px;
-}
-
-button{
-    background:rgba(0,0,0,0.45);
-    border:1px solid rgba(255,255,255,0.15);
-    color:#cfefff;
-    padding:6px 10px;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:13px;
-}
-
-button.active{
-    border-color:#fff;
-    color:#fff;
 }
 
 #panel{
@@ -64,115 +40,77 @@ button.active{
 }
 </style>
 </head>
+
 <body>
 
 <div id="jwst-bg"></div>
 <div id="overlay"></div>
 
-<div id="controls">
-    <button onclick="setMode('silence')">Тиша</button>
-    <button onclick="setMode('memory')">Памʼять</button>
-    <button onclick="setMode('novelty')">Новизна</button>
-    <button onclick="toggleIR()">IR</button>
-</div>
-
 <div id="panel">
-    <b>JWST Observer</b><br>
-    Режим: <span id="modeLabel"></span><br>
+    <b>JWST Live Gallery</b><br>
     <span id="meta"></span>
 </div>
 
 <script>
-// ====== Твій JWST API ключ ======
-const API_KEY = "a1686b45-a59a-478c-85a3-cc44c95ea90e";
-
-let currentMode = "memory";
-let irOn = false;
-let images = []; // Масив для превʼю
-let lastIndex = -1;
-
-// Встановлення режиму
-function setMode(mode){
-    currentMode = mode;
-    document.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
-    event.target.classList.add("active");
-    showNextImage();
-}
-
-// IR-фільтр
-function toggleIR(){
-    irOn = !irOn;
-    document.getElementById("jwst-bg").classList.toggle("ir", irOn);
-}
-
-// Завантажуємо останні 50 фото з JWST API
-async function loadImages(){
-    try{
-        const url = `https://jwstapi.com/api/v1/images?key=${API_KEY}&limit=50`;
-        const res = await fetch(url);
-        const json = await res.json();
-
-        if(json && json.data && json.data.length){
-            // Фільтруємо лише ті, які мають previewUrl або downloadUrl
-            images = json.data.filter(i => i.previewUrl || i.downloadUrl)
-                              .map(i => ({
-                                  url: i.previewUrl || i.downloadUrl,
-                                  title: i.title || "—",
-                                  instrument: i.instrument || "—",
-                                  date: i.obsDate || "—"
-                              }));
-            showNextImage();
-        } else {
-            console.warn("JWST API не повернув зображень");
-        }
-    } catch(e){
-        console.error("Помилка при завантаженні JWST API:", e);
+// ===========================
+// Масив прев’ю JWST фото
+// ===========================
+const images = [
+    {
+        url: "https://jwst-previews.s3.amazonaws.com/nircam/miri1.jpg",
+        title: "NGC 3324",
+        instrument: "NIRCam",
+        date: "2022-07-12"
+    },
+    {
+        url: "https://jwst-previews.s3.amazonaws.com/nircam/miri2.jpg",
+        title: "Stephan's Quintet",
+        instrument: "MIRI",
+        date: "2022-07-15"
+    },
+    {
+        url: "https://jwst-previews.s3.amazonaws.com/nircam/miri3.jpg",
+        title: "Carina Nebula",
+        instrument: "NIRISS",
+        date: "2022-07-20"
+    },
+    {
+        url: "https://jwst-previews.s3.amazonaws.com/nircam/miri4.jpg",
+        title: "SMACS 0723",
+        instrument: "NIRCam",
+        date: "2022-07-22"
     }
+    // Можна додати ще URL прев’ю JWST
+];
+
+let currentIndex = 0;
+const bg = document.getElementById("jwst-bg");
+const meta = document.getElementById("meta");
+
+// Показ фото
+function showImage(idx){
+    const item = images[idx];
+    if(!item) return;
+
+    // Fade out
+    bg.style.opacity = 0;
+    setTimeout(()=>{
+        bg.style.backgroundImage = `url(${item.url})`;
+        meta.innerHTML = `Назва: ${item.title}<br>Камера: ${item.instrument}<br>Дата: ${item.date}`;
+        // Fade in
+        bg.style.opacity = 1;
+    },500);
 }
 
-// Показ наступного фото залежно від режиму
-function showNextImage(){
-    if(!images.length) return;
-
-    let selected;
-
-    if(currentMode === "novelty"){
-        selected = images[0]; // найновіше
-    } else if(currentMode === "memory"){
-        const idx = Math.floor(Math.random() * Math.min(images.length,30));
-        selected = images[idx];
-    } else { // Тиша
-        selected = images[images.length - 1];
-    }
-
-    lastIndex = images.indexOf(selected);
-    displayImage(selected);
+// Авто-зміна фото кожну хвилину
+function nextImage(){
+    currentIndex = (currentIndex + 1) % images.length;
+    showImage(currentIndex);
 }
 
-// Показ зображення та метаданих
-function displayImage(item){
-    const bg = document.getElementById("jwst-bg");
-    bg.style.backgroundImage = `url(${item.url})`;
-    bg.style.opacity = "1";
-
-    document.getElementById("meta").innerHTML =
-        `Назва: ${item.title}<br>` +
-        `Камера: ${item.instrument}<br>` +
-        `Дата: ${item.date}`;
-}
-
-// Автооновлення кожні 60 секунд (повільний фон)
-setInterval(()=>{
-    if(images.length && currentMode !== "novelty"){
-        let nextIndex = (lastIndex + 1) % images.length;
-        lastIndex = nextIndex;
-        displayImage(images[nextIndex]);
-    }
-}, 60000); // змінюємо фото кожну хвилину
-
-// Перший запуск
-document.getElementById("modeLabel").textContent = currentMode;
-loadImages();
+// Перший показ
+showImage(currentIndex);
+setInterval(nextImage, 60000); // 60 секунд
 </script>
 
 </body>
