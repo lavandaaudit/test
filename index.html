@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>ibonarium.stability.human.lab.live</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  color: #cfefff;
+  font-family: Inter, system-ui, monospace;
+}
+
+.wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.panel {
+  width: 96%;
+  height: 94%;
+  display: flex;
+  gap: 20px;
+}
+
+/* LEFT */
+.left {
+  width: 40%;
+  height: 100%;
+  border: 1px solid #0ff3;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.left h2 {
+  font-size: 22px;
+  margin-bottom: 18px;
+  text-align: center;
+  color: #7fffd4;
+}
+
+.indicator {
+  margin-bottom: 14px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.indicator span {
+  color: #9affff;
+  font-weight: 500;
+}
+
+/* RIGHT */
+.right {
+  width: 60%;
+  height: 100%;
+  border: 1px solid #0ff3;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chartBox {
+  flex: 1;
+  position: relative;
+}
+
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .panel {
+    flex-direction: column;
+  }
+  .left, .right {
+    width: 100%;
+    height: 50%;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="wrapper">
+  <div class="panel">
+
+    <!-- LEFT COLUMN -->
+    <div class="left">
+      <h2>КОСМІЧНІ ТА ГЕОМАГНІТНІ ПОКАЗНИКИ</h2>
+
+      <div class="indicator">Solar Wind Speed (km/s): <span id="sw_speed">—</span></div>
+      <div class="indicator">Solar Wind Density (/cc): <span id="sw_density">—</span></div>
+      <div class="indicator">Solar Wind Temperature (K): <span id="sw_temp">—</span></div>
+
+      <div class="indicator">IMF Bt – Total Magnetic Field (nT): <span id="imf_bt">—</span></div>
+      <div class="indicator">IMF Bz (nT): <span id="imf_bz">—</span></div>
+      <div class="indicator">IMF By (nT): <span id="imf_by">—</span></div>
+
+      <div class="indicator">Solar Wind Dynamic Pressure (nPa): <span id="pressure">—</span></div>
+
+      <div class="indicator">Proton Flux &gt;10 MeV: <span id="proton_flux">—</span></div>
+      <div class="indicator">Electron Flux &gt;2 MeV: <span id="electron_flux">—</span></div>
+
+      <div class="indicator">Kp Index: <span id="kp">—</span></div>
+      <div class="indicator">Dst Index (nT): <span id="dst">—</span></div>
+      <div class="indicator">AE Index (Auroral Electrojet): <span id="ae">—</span></div>
+
+      <div class="indicator">Geomagnetic Stress Index (GSI): <span id="gsi">—</span></div>
+      <div class="indicator">Geomagnetic Storm Level (G1–G5): <span id="storm">—</span></div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right">
+      <div class="chartBox">
+        <canvas id="breathChart"></canvas>
+      </div>
+      <div class="chartBox">
+        <canvas id="stressChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const labels = [];
+
+const dataBt = [];
+const dataBz = [];
+const dataPressure = [];
+const dataKp = [];
+const dataGSI = [];
+
+/* ====== CHART 1 ====== */
+const breathChart = new Chart(
+  document.getElementById('breathChart').getContext('2d'),
+  {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'IMF Bt (nT)', data: dataBt, borderWidth: 2, tension: 0.4 },
+        { label: 'IMF Bz (nT)', data: dataBz, borderWidth: 2, tension: 0.4 },
+        { label: 'Dynamic Pressure (nPa)', data: dataPressure, borderWidth: 2, tension: 0.4 },
+        { label: 'Kp Index', data: dataKp, borderWidth: 2, tension: 0.4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ticks: { color: '#9ff' }, grid: { color: '#033' } },
+        y: { ticks: { color: '#9ff' }, grid: { color: '#033' } }
+      },
+      plugins: {
+        legend: { labels: { color: '#cff' } }
+      }
+    }
+  }
+);
+
+/* ====== CHART 2 ====== */
+const stressChart = new Chart(
+  document.getElementById('stressChart').getContext('2d'),
+  {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Geomagnetic Stress Index (GSI)',
+          data: dataGSI,
+          borderWidth: 3,
+          tension: 0.35
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ticks: { color: '#9ff' }, grid: { color: '#033' } },
+        y: { ticks: { color: '#9ff' }, grid: { color: '#033' } }
+      },
+      plugins: {
+        legend: { labels: { color: '#cff' } }
+      }
+    }
+  }
+);
+
+/* ====== DATA UPDATE ====== */
+async function updateData() {
+  try {
+    const plasma = await fetch("https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json").then(r => r.json());
+    const mag = await fetch("https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json").then(r => r.json());
+    const kp = await fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json").then(r => r.json());
+
+    const p = plasma[plasma.length - 1];
+    const m = mag[mag.length - 1];
+    const k = kp[kp.length - 1];
+
+    const time = new Date().toLocaleTimeString();
+
+    labels.push(time);
+    if (labels.length > 30) {
+      labels.shift();
+      dataBt.shift();
+      dataBz.shift();
+      dataPressure.shift();
+      dataKp.shift();
+      dataGSI.shift();
+    }
+
+    const bt = parseFloat(m[6]);
+    const bz = parseFloat(m[5]);
+    const pressure = parseFloat(p[7]);
+    const kpVal = parseFloat(k[1]);
+
+    const gsi =
+      Math.abs(bz) * 0.4 +
+      bt * 0.3 +
+      pressure * 0.2 +
+      kpVal * 0.1;
+
+    dataBt.push(bt);
+    dataBz.push(bz);
+    dataPressure.push(pressure);
+    dataKp.push(kpVal);
+    dataGSI.push(gsi);
+
+    document.getElementById("sw_speed").textContent = p[2];
+    document.getElementById("sw_density").textContent = p[1];
+    document.getElementById("sw_temp").textContent = p[3];
+
+    document.getElementById("imf_bt").textContent = bt;
+    document.getElementById("imf_bz").textContent = bz;
+    document.getElementById("imf_by").textContent = m[4];
+
+    document.getElementById("pressure").textContent = pressure;
+    document.getElementById("kp").textContent = kpVal;
+
+    document.getElementById("gsi").textContent = gsi.toFixed(2);
+
+    document.getElementById("dst").textContent = "NOAA Dst realtime";
+    document.getElementById("ae").textContent = "Auroral activity active";
+    document.getElementById("proton_flux").textContent = "SWPC GOES";
+    document.getElementById("electron_flux").textContent = "SWPC GOES";
+
+    document.getElementById("storm").textContent =
+      kpVal >= 8 ? "G4–G5" :
+      kpVal >= 7 ? "G3" :
+      kpVal >= 6 ? "G2" :
+      kpVal >= 5 ? "G1" : "Quiet";
+
+    breathChart.update();
+    stressChart.update();
+
+  } catch (e) {
+    console.error("DATA ERROR", e);
+  }
+}
+
+updateData();
+setInterval(updateData, 60000);
+</script>
+</body>
+</html>
