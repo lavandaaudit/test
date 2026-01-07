@@ -55,6 +55,7 @@ canvas{width:100%!important;height:100%!important}
 <div class="wrapper">
 <div class="panel">
 
+<!-- LEFT -->
 <div class="left">
 <h2>КОСМІЧНІ ТА ГЕОМАГНІТНІ ПОКАЗНИКИ</h2>
 
@@ -68,17 +69,18 @@ canvas{width:100%!important;height:100%!important}
 
 <div class="indicator">Solar Wind Dynamic Pressure (nPa): <span id="pressure">—</span></div>
 
-<div class="indicator">Proton Flux &gt;10 MeV: <span id="proton_flux">SWPC GOES</span></div>
-<div class="indicator">Electron Flux &gt;2 MeV: <span id="electron_flux">SWPC GOES</span></div>
+<div class="indicator">Proton Flux &gt;10 MeV: <span>SWPC GOES</span></div>
+<div class="indicator">Electron Flux &gt;2 MeV: <span>SWPC GOES</span></div>
 
 <div class="indicator">Kp Index: <span id="kp">—</span></div>
-<div class="indicator">Dst Index (nT): <span id="dst">NOAA Dst realtime</span></div>
-<div class="indicator">AE Index (Auroral Electrojet): <span id="ae">Auroral activity active</span></div>
+<div class="indicator">Dst Index (nT): <span>NOAA Dst realtime</span></div>
+<div class="indicator">AE Index (Auroral Electrojet): <span>Auroral activity active</span></div>
 
 <div class="indicator">Geomagnetic Stress Index (GSI): <span id="gsi">—</span></div>
 <div class="indicator">Geomagnetic Storm Level (G1–G5): <span id="storm">—</span></div>
 </div>
 
+<!-- RIGHT -->
 <div class="right">
 <div class="chartBox"><canvas id="breathChart"></canvas></div>
 <div class="chartBox"><canvas id="stressChart"></canvas></div>
@@ -91,7 +93,9 @@ canvas{width:100%!important;height:100%!important}
 const labels=[];
 const dataBt=[],dataBz=[],dataPressure=[],dataKp=[],dataGSI=[];
 
-const breathChart=new Chart(breathChart?.getContext?.('2d')||document.getElementById('breathChart').getContext('2d'),{
+/* CHART 1 */
+const breathChart=new Chart(
+document.getElementById('breathChart').getContext('2d'),{
 type:'line',
 data:{labels,
 datasets:[
@@ -103,10 +107,14 @@ datasets:[
 options:{responsive:true,maintainAspectRatio:false}
 });
 
-const stressChart=new Chart(document.getElementById('stressChart').getContext('2d'),{
+/* CHART 2 */
+const stressChart=new Chart(
+document.getElementById('stressChart').getContext('2d'),{
 type:'line',
 data:{labels,
-datasets:[{label:'Geomagnetic Stress Index (GSI)',data:dataGSI,borderWidth:3,tension:.35}]},
+datasets:[
+{label:'Geomagnetic Stress Index (GSI)',data:dataGSI,borderWidth:3,tension:.35}
+]},
 options:{responsive:true,maintainAspectRatio:false}
 });
 
@@ -116,9 +124,9 @@ const plasma=await fetch("https://services.swpc.noaa.gov/products/solar-wind/pla
 const mag=await fetch("https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json").then(r=>r.json());
 const kp=await fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json").then(r=>r.json());
 
-const p=plasma.at(-1);
-const m=mag.at(-1);
-const k=kp.at(-1);
+const p=plasma[plasma.length-1];
+const m=mag[mag.length-1];
+const k=kp[kp.length-1];
 
 const density=parseFloat(p[1]);
 const speed=parseFloat(p[2]);
@@ -131,16 +139,20 @@ const bt=parseFloat(m[4]);
 
 const kpVal=parseFloat(k[1]);
 
-const gsi =
-Math.abs(bz)*0.4 +
-bt*0.3 +
-pressure*0.2 +
+const gsi=
+Math.abs(bz)*0.4+
+bt*0.3+
+pressure*0.2+
 kpVal*0.1;
 
 labels.push(new Date().toLocaleTimeString());
 if(labels.length>30){
 labels.shift();
-dataBt.shift();dataBz.shift();dataPressure.shift();dataKp.shift();dataGSI.shift();
+dataBt.shift();
+dataBz.shift();
+dataPressure.shift();
+dataKp.shift();
+dataGSI.shift();
 }
 
 dataBt.push(bt);
@@ -149,21 +161,19 @@ dataPressure.push(pressure);
 dataKp.push(kpVal);
 dataGSI.push(gsi);
 
-sw_speed.textContent=speed;
-sw_density.textContent=density;
-sw_temp.textContent=temp;
+document.getElementById("sw_speed").textContent=speed;
+document.getElementById("sw_density").textContent=density;
+document.getElementById("sw_temp").textContent=temp;
 
-imf_bt.textContent=bt;
-imf_bz.textContent=bz;
-imf_by.textContent=by;
+document.getElementById("imf_bt").textContent=bt;
+document.getElementById("imf_bz").textContent=bz;
+document.getElementById("imf_by").textContent=by;
 
-pressureSpan=pressure;
 document.getElementById("pressure").textContent=pressure.toFixed(2);
-kp.textContent=kpVal;
-gsiEl=document.getElementById("gsi");
-gsiEl.textContent=gsi.toFixed(2);
+document.getElementById("kp").textContent=kpVal;
+document.getElementById("gsi").textContent=gsi.toFixed(2);
 
-storm.textContent=
+document.getElementById("storm").textContent=
 kpVal>=8?"G4–G5":
 kpVal>=7?"G3":
 kpVal>=6?"G2":
@@ -172,7 +182,9 @@ kpVal>=5?"G1":"Quiet";
 breathChart.update();
 stressChart.update();
 
-}catch(e){console.error("DATA ERROR",e)}
+}catch(e){
+console.error("DATA ERROR",e);
+}
 }
 
 updateData();
