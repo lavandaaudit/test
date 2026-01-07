@@ -2,8 +2,9 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>Ground-based Night Sky Live</title>
+<title>Mauna Kea Live Gallery</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body {
     margin:0;
@@ -15,6 +16,8 @@ body {
     display:flex;
     flex-direction:column;
     align-items:center;
+    justify-content:flex-start;
+    height:100vh;
 }
 
 #panel {
@@ -25,6 +28,7 @@ body {
     border-radius:12px;
     font-size:14px;
     text-align:center;
+    z-index:10;
 }
 
 #live-image {
@@ -54,7 +58,7 @@ button.active { border-color:#fff; color:#fff; }
 <body>
 
 <div id="panel">
-    <b>Live Night Sky – Mauna Kea & Canary Islands</b><br>
+    <b>Live Night Sky – Mauna Kea Observatory</b><br>
     Джерело: <a href="https://www.ifa.hawaii.edu/info/livecams/" target="_blank" style="color:#cfefff;">ifa.hawaii.edu</a><br>
     <span id="cam-name">Камера: --</span><br>
     <span id="time">UTC: --:--:--</span><br>
@@ -64,15 +68,11 @@ button.active { border-color:#fff; color:#fff; }
 <img id="live-image" src="" alt="Night Sky Live">
 
 <script>
-// ---- Масив live камер ----
+// ---- Масив Mauna Kea камер ----
 const cams = [
     {name:"Keck 1", url:"https://www.ifa.hawaii.edu/info/livecams/images/keck_1.jpg"},
     {name:"Keck 2", url:"https://www.ifa.hawaii.edu/info/livecams/images/keck_2.jpg"},
-    {name:"Subaru", url:"https://www.ifa.hawaii.edu/info/livecams/images/subaru.jpg"},
-    {name:"Gemini North", url:"https://www.ifa.hawaii.edu/info/livecams/images/gemini_north.jpg"},
-    // Canary Islands
-    {name:"Teide Telescope", url:"https://www.iac.es/en/telescopes/teide-livecam.jpg"},
-    {name:"Roque de los Muchachos", url:"https://www.iac.es/en/telescopes/roque-livecam.jpg"}
+    {name:"Subaru", url:"https://www.ifa.hawaii.edu/info/livecams/images/subaru.jpg"}
 ];
 
 const img = document.getElementById('live-image');
@@ -100,7 +100,8 @@ function updateCam() {
     
     // Оновлюємо UTC час
     const now = new Date();
-    document.getElementById('time').textContent = `UTC: ${now.getUTCHours()}:${now.getUTCMinutes()}:${now.getUTCSeconds()}`;
+    const pad = (n) => n.toString().padStart(2,'0');
+    document.getElementById('time').textContent = `UTC: ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}`;
 }
 
 // ---- Автооновлення кожні 10 секунд ----
