@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>ISS Live – МКС</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body {
     margin:0;
@@ -17,19 +16,37 @@ body {
 
 #panel {
     position:absolute;
-    top:16px; left:16px;
+    top:16px;
+    left:16px;
     background:rgba(0,0,0,0.45);
     backdrop-filter:blur(6px);
     padding:12px 16px;
     border-radius:12px;
     font-size:14px;
+    z-index:10;
 }
 
-iframe {
+button {
+    margin-top:6px;
+    background:rgba(0,0,0,0.45);
+    border:1px solid rgba(255,255,255,0.15);
+    color:#cfefff;
+    padding:6px 10px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+button.active { border-color:#fff; color:#fff; }
+
+#iss-video {
     position:fixed;
-    top:0; left:0;
-    width:100%; height:100%;
-    border:none;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    filter: brightness(1) contrast(1) saturate(1);
+    transition: filter 0.5s ease;
 }
 </style>
 </head>
@@ -38,11 +55,54 @@ iframe {
 <div id="panel">
     <b>ISS Live Camera</b><br>
     Прямий стрім Землі з МКС<br>
-    Джерело: NASA
+    <span id="time">UTC: --:--:--</span><br>
+    <span id="coords">Lat: --, Lon: --</span><br>
+    <button id="toggleIR">IR / Контраст</button>
 </div>
 
-<!-- Вставляємо плеєр NASA -->
-<iframe src="https://www.nasa.gov/multimedia/nasatv/iss_ustream.html"></iframe>
+<video id="iss-video" autoplay muted playsinline></video>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+// ---- Live Video Setup ----
+const video = document.getElementById('iss-video');
+const streamURL = 'https://www.nasa.gov/sites/default/files/atoms/video/iss_720p.m3u8';
+
+if(Hls.isSupported()) {
+    const hls = new Hls();
+    hls.loadSource(streamURL);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = streamURL;
+    video.addEventListener('loadedmetadata', ()=> video.play());
+}
+
+// ---- IR / Contrast Filter ----
+let irOn = false;
+document.getElementById('toggleIR').addEventListener('click', ()=>{
+    irOn = !irOn;
+    video.style.filter = irOn
+        ? 'brightness(0.8) contrast(1.5) saturate(1.2) hue-rotate(30deg)'
+        : 'brightness(1) contrast(1) saturate(1)';
+});
+
+// ---- ISS Position (Open Notify API) ----
+async function updateISS() {
+    try {
+        const res = await fetch('http://api.open-notify.org/iss-now.json');
+        const data = await res.json();
+        const pos = data.iss_position;
+        document.getElementById('coords').textContent = `Lat: ${pos.latitude}, Lon: ${pos.longitude}`;
+        const now = new Date();
+        document.getElementById('time').textContent = `UTC: ${now.getUTCHours()}:${now.getUTCMinutes()}:${now.getUTCSeconds()}`;
+    } catch(e) {
+        console.error('ISS API error', e);
+    }
+}
+setInterval(updateISS, 1000);
+updateISS();
+</script>
 
 </body>
 </html>
