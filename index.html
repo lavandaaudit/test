@@ -6,20 +6,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body {margin:0;padding:0;background:#000;overflow:hidden;font-family:Inter, monospace;}
-#controls {
-    position:absolute; top:10px; left:50%; transform:translateX(-50%);
-    background:rgba(0,0,0,0.45); backdrop-filter:blur(6px);
-    padding:8px 12px; border-radius:10px; z-index:10; color:#cfefff;
-}
-button {margin:2px;padding:6px 10px;border-radius:8px;cursor:pointer;background:rgba(0,0,0,0.5);color:#cfefff;border:1px solid #fff2;}
-button.active {border-color:#fff;color:#fff;}
 canvas {display:block;}
 </style>
 </head>
 <body>
-<div id="controls">
-    <button id="toggleIR">IR / Контраст</button>
-</div>
+
 <canvas id="nebula"></canvas>
 
 <script>
@@ -28,9 +19,6 @@ const canvas = document.getElementById('nebula');
 const ctx = canvas.getContext('2d');
 let width = canvas.width = window.innerWidth;
 let height = canvas.height = window.innerHeight;
-
-let irOn = false;
-document.getElementById('toggleIR').addEventListener('click', ()=>{ irOn=!irOn; });
 
 // -------------------- Perlin Noise --------------------
 class Perlin {
@@ -68,19 +56,22 @@ class Perlin {
 }
 const perlin = new Perlin();
 
-// -------------------- Generate nebula --------------------
-let t=0;
+// -------------------- Nebula Generation --------------------
+let t = 0;
 function drawNebula() {
     const img = ctx.createImageData(width,height);
     const data = img.data;
     for(let y=0;y<height;y++){
         for(let x=0;x<width;x++){
-            const idx=(y*width+x)*4;
-            let n = perlin.noise(x*0.005, y*0.005 + t)*0.5 +0.5; // 0-1
-            // Градієнт Hubble style
-            let r = Math.floor(n*200 + Math.sin(t*0.3)*50);
-            let g = Math.floor(n*150 + Math.cos(t*0.2)*50);
-            let b = Math.floor(n*255 + Math.sin(t*0.1)*50);
+            const idx = (y*width+x)*4;
+            // Зсув координат для руху “на глядача”
+            let nx = (x - width/2)/width*2;
+            let ny = (y - height/2)/height*2 - t*0.001; // рух вперед
+            let n = perlin.noise(nx*1.5, ny*1.5)*0.5+0.5;
+            // Градієнт кольору JWST/Hubble
+            let r = Math.floor(n*200 + Math.sin(t*0.0005)*50);
+            let g = Math.floor(n*150 + Math.cos(t*0.0003)*50);
+            let b = Math.floor(n*255 + Math.sin(t*0.0002)*50);
             data[idx] = r;
             data[idx+1] = g;
             data[idx+2] = b;
@@ -88,13 +79,7 @@ function drawNebula() {
         }
     }
     ctx.putImageData(img,0,0);
-    if(irOn){
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.filter='brightness(0.8) contrast(1.5) saturate(1.2) hue-rotate(30deg)';
-        ctx.drawImage(canvas,0,0);
-        ctx.filter='none';
-    }
-    t+=0.5; // рух газів
+    t += 1; // повільний рух вперед
     requestAnimationFrame(drawNebula);
 }
 
