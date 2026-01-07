@@ -10,38 +10,47 @@ html,body{
   margin:0;
   padding:0;
   background:#000;
-  color:#cfefff;
+  color:#d8f3ff;
   font-family:Inter,system-ui,monospace;
 }
 .container{
   max-width:900px;
   margin:auto;
-  padding:16px;
+  padding:12px;
 }
 h1{
-  font-size:22px;
-  margin-bottom:12px;
+  font-size:20px;
+  margin-bottom:10px;
 }
-.data{
+.grid{
   display:grid;
   grid-template-columns:1fr;
-  gap:8px;
+  gap:6px;
 }
 .item{
-  padding:10px;
+  background:#050c14;
   border:1px solid #123;
   border-radius:6px;
-  background:#050b12;
+  padding:8px;
+  font-size:14px;
 }
 .value{
   float:right;
-  font-weight:bold;
+  font-weight:600;
+}
+canvas{
+  width:100%;
+  height:160px;   /* 🔽 зменшено */
+  margin-top:10px;
+  background:#03070c;
+  border:1px solid #123;
+  border-radius:6px;
 }
 .status{
-  margin-top:12px;
-  padding:12px;
-  border-radius:6px;
+  margin-top:10px;
+  padding:10px;
   background:#08121c;
+  border-radius:6px;
 }
 </style>
 </head>
@@ -50,7 +59,9 @@ h1{
 <div class="container">
 <h1>КОСМІЧНІ ТА ГЕОМАГНІТНІ ПОКАЗНИКИ</h1>
 
-<div class="data" id="data"></div>
+<div class="grid" id="data"></div>
+
+<canvas id="chart"></canvas>
 
 <div class="status" id="status"></div>
 </div>
@@ -58,10 +69,19 @@ h1{
 <script>
 const dataEl = document.getElementById("data");
 const statusEl = document.getElementById("status");
+const ctx = document.getElementById("chart").getContext("2d");
 
 function safe(n){ return isFinite(n) ? n : 0 }
 
-async function loadData(){
+function extractKp(data){
+  for(let i=data.length-1;i>=0;i--){
+    const v = Number(data[i][1]);
+    if (isFinite(v)) return v;
+  }
+  return 0;
+}
+
+async function load(){
 
   const plasma = await fetch(
     "https://services.swpc.noaa.gov/json/solar-wind/plasma-1-day.json"
@@ -71,7 +91,7 @@ async function loadData(){
     "https://services.swpc.noaa.gov/json/solar-wind/mag-1-day.json"
   ).then(r=>r.json());
 
-  const kp = await fetch(
+  const kpRaw = await fetch(
     "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
   ).then(r=>r.json());
 
@@ -80,50 +100,48 @@ async function loadData(){
 
   const speed = safe(Number(p.speed));
   const density = safe(Number(p.density));
-  const temperature = safe(Number(p.temperature));
+  const temp = safe(Number(p.temperature));
 
   const bt = safe(Number(m.bt));
   const bz = safe(Number(m.bz));
   const by = safe(Number(m.by));
 
-  const kpIndex = safe(Number(kp.at(-1)[1]));
+  const kp = extractKp(kpRaw);
 
-  // Dynamic Pressure
-  const dynamicPressure =
+  const pressure =
     1.6726e-6 * density * speed * speed;
 
-  // GSI
   const GSI =
     Math.abs(bz)*0.4 +
     bt*0.2 +
     (speed/400)*0.2 +
     (density/10)*0.1 +
-    kpIndex*0.1;
+    kp*0.1;
 
   const storm =
-    GSI>8?"Extreme":
-    GSI>6?"Strong":
-    GSI>4?"Elevated":
-    GSI>2?"Mild":"Quiet";
+    GSI>8?"G5 Extreme":
+    GSI>6?"G4 Strong":
+    GSI>4?"G3 Elevated":
+    GSI>2?"G2 Mild":"G0 Quiet";
 
   const rows = [
     ["Solar Wind Speed (km/s)", speed.toFixed(1)],
     ["Solar Wind Density (/cc)", density.toFixed(2)],
-    ["Solar Wind Temperature (K)", temperature.toFixed(0)],
+    ["Solar Wind Temperature (K)", temp.toFixed(0)],
     ["IMF Bt – Total Magnetic Field (nT)", bt.toFixed(2)],
     ["IMF Bz (nT)", bz.toFixed(2)],
     ["IMF By (nT)", by.toFixed(2)],
-    ["Solar Wind Dynamic Pressure (nPa)", dynamicPressure.toFixed(2)],
+    ["Solar Wind Dynamic Pressure (nPa)", pressure.toFixed(2)],
     ["Proton Flux >10 MeV", "SWPC GOES"],
     ["Electron Flux >2 MeV", "SWPC GOES"],
-    ["Kp Index", kpIndex.toFixed(2)],
+    ["Kp Index", kp.toFixed(2)],
     ["Dst Index (nT)", "NOAA realtime"],
-    ["AE Index", "Auroral activity"],
+    ["AE Index", "Auroral activity active"],
     ["Geomagnetic Stress Index (GSI)", GSI.toFixed(2)],
-    ["Geomagnetic Storm Level", storm]
+    ["Geomagnetic Storm Level (G1–G5)", storm]
   ];
 
-  dataEl.innerHTML = "";
+  dataEl.innerHTML="";
   rows.forEach(r=>{
     const d=document.createElement("div");
     d.className="item";
@@ -131,13 +149,38 @@ async function loadData(){
     dataEl.appendChild(d);
   });
 
+  drawChart(speed, bt, bz, kp, GSI);
+
   statusEl.innerHTML =
     `<b>System State:</b> ${storm}<br>
+     <b>Kp:</b> ${kp.toFixed(2)} |
      <b>GSI:</b> ${GSI.toFixed(2)}`;
 }
 
-loadData();
-setInterval(loadData,60000);
+function drawChart(speed, bt, bz, kp, gsi){
+  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+
+  const values=[speed/10, bt, Math.abs(bz), kp*10, gsi*10];
+  const labels=["V","Bt","|Bz|","Kp","GSI"];
+
+  const w=ctx.canvas.width;
+  const h=ctx.canvas.height;
+  const step=w/(values.length+1);
+
+  ctx.strokeStyle="#39f";
+  ctx.beginPath();
+  values.forEach((v,i)=>{
+    const x=step*(i+1);
+    const y=h - v;
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+    ctx.fillText(labels[i],x-6,h-4);
+  });
+  ctx.stroke();
+}
+
+load();
+setInterval(load,60000);
 </script>
 </body>
 </html>
