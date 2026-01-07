@@ -10,18 +10,16 @@ body {
     margin:0;
     padding:0;
     background:#000;
-    color:#cfefff;
     font-family:Inter, monospace;
     overflow:hidden;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:flex-start;
     height:100vh;
 }
 
 #panel {
-    margin-top:10px;
+    position:absolute;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
     background:rgba(0,0,0,0.45);
     backdrop-filter:blur(6px);
     padding:12px 16px;
@@ -29,17 +27,18 @@ body {
     font-size:14px;
     text-align:center;
     z-index:10;
+    color:#cfefff;
 }
 
 #live-image {
-    width:90%;
-    max-width:1200px;
-    max-height:80vh;
-    margin-top:10px;
-    border:2px solid #fff2;
-    border-radius:8px;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    object-fit:cover; /* займатиме весь екран */
     transition: opacity 0.8s ease, filter 0.5s ease;
-    object-fit: contain; /* зберігаємо пропорції */
+    z-index:0;
 }
 
 button {
@@ -53,13 +52,14 @@ button {
 }
 
 button.active { border-color:#fff; color:#fff; }
+a { color:#cfefff; text-decoration:none; }
 </style>
 </head>
 <body>
 
 <div id="panel">
     <b>Live Night Sky – Mauna Kea Observatory</b><br>
-    Джерело: <a href="https://www.ifa.hawaii.edu/info/livecams/" target="_blank" style="color:#cfefff;">ifa.hawaii.edu</a><br>
+    Джерело: <a href="https://www.ifa.hawaii.edu/info/livecams/" target="_blank">ifa.hawaii.edu</a><br>
     <span id="cam-name">Камера: --</span><br>
     <span id="time">UTC: --:--:--</span><br>
     <button id="toggleIR">IR / Контраст</button>
@@ -68,7 +68,7 @@ button.active { border-color:#fff; color:#fff; }
 <img id="live-image" src="" alt="Night Sky Live">
 
 <script>
-// ---- Масив Mauna Kea камер ----
+// ---- Масив камер ----
 const cams = [
     {name:"Keck 1", url:"https://www.ifa.hawaii.edu/info/livecams/images/keck_1.jpg"},
     {name:"Keck 2", url:"https://www.ifa.hawaii.edu/info/livecams/images/keck_2.jpg"},
