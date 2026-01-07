@@ -2,9 +2,8 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>ibonarium :: jwst slow modes</title>
+<title>ibonarium :: jwst slow observer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex,nofollow">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -17,52 +16,39 @@ html,body{
     overflow:hidden;
 }
 
-/* ===== JWST BACKGROUND ===== */
 #jwst-bg{
     position:fixed;
     inset:0;
     background-size:cover;
     background-position:center;
-    transform:scale(1);
-    transition:opacity 2s ease, filter 1.5s ease;
     opacity:0;
-    filter:brightness(0.85) contrast(1.05);
+    transition:opacity 2s ease, filter 1.5s ease;
     will-change:transform;
 }
 
-@keyframes driftSoft{
+@keyframes driftSlow{
     0%{transform:scale(1)}
-    100%{transform:scale(1.01)}
+    100%{transform:scale(1.02)}
 }
 
-@keyframes driftMedium{
-    0%{transform:scale(1) translate(0,0)}
-    50%{transform:scale(1.02) translate(-1%,-1%)}
-    100%{transform:scale(1.01) translate(1%,1%)}
-}
-
-/* ===== IR FILTER ===== */
 .ir{
     filter:
         brightness(0.9)
-        contrast(1.2)
+        contrast(1.25)
         saturate(1.4)
         hue-rotate(35deg);
 }
 
-/* ===== OVERLAY ===== */
 #overlay{
     position:fixed;
     inset:0;
-    background:radial-gradient(circle at center, rgba(0,0,0,0.2), #000 80%);
-    pointer-events:none;
+    background:radial-gradient(circle at center, rgba(0,0,0,0.25), #000 80%);
 }
 
-/* ===== UI ===== */
 #controls{
     position:absolute;
-    top:20px;
-    left:20px;
+    top:16px;
+    left:16px;
     display:flex;
     gap:8px;
 }
@@ -77,25 +63,18 @@ button{
     font-size:13px;
 }
 
-button.active{
-    border-color:#fff;
-    color:#fff;
-}
-
 #panel{
     position:absolute;
-    bottom:20px;
-    left:20px;
+    bottom:16px;
+    left:16px;
     background:rgba(0,0,0,0.45);
     backdrop-filter:blur(6px);
-    padding:14px 18px;
+    padding:12px 16px;
     border-radius:12px;
     font-size:14px;
     line-height:1.5;
     max-width:420px;
 }
-
-#panel b{color:#fff}
 </style>
 </head>
 
@@ -113,16 +92,16 @@ button.active{
 
 <div id="panel">
     <b>JWST Slow Observer</b><br>
-    Режим: <span id="modeLabel"></span><br>
+    Режим: <span id="mode"></span><br>
     <span id="meta"></span>
 </div>
 
 <script>
-const CACHE_KEY = "jwst_mode_cache";
-let currentMode = "memory";
-let irEnabled = false;
+const CACHE_KEY = "jwst_fixed_cache";
+let mode = "memory";
+let ir = false;
 
-function cacheDuration(mode){
+function cacheTTL(){
     if(mode==="silence") return 72*60*60*1000;
     if(mode==="novelty") return 6*60*60*1000;
     return 24*60*60*1000;
@@ -131,52 +110,58 @@ function cacheDuration(mode){
 async function loadJWST(){
     const cached = localStorage.getItem(CACHE_KEY);
     if(cached){
-        const data = JSON.parse(cached);
-        if(Date.now()-data.time < cacheDuration(data.mode)){
-            apply(data);
+        const d = JSON.parse(cached);
+        if(Date.now()-d.time < cacheTTL()){
+            apply(d);
             return;
         }
     }
 
-    const page = currentMode==="memory"
-        ? Math.floor(Math.random()*50)+1
-        : 1;
-
-    const query = {
-        service:"Mast.Caom.Filtered",
-        params:{
-            columns:"obs_id,target_name,instrument_name,release_date",
-            filters:[
-                {paramName:"obs_collection",values:["JWST"]},
-                {paramName:"dataproduct_type",values:["image"]},
-                {paramName:"dataRights",values:["PUBLIC"]}
-            ]
-        },
-        format:"json",
-        pagesize:1,
-        page:page
-    };
-
-    const res = await fetch("https://mast.stsci.edu/api/v0/invoke",{
+    /* 1️⃣ шукаємо спостереження */
+    const search = await fetch("https://mast.stsci.edu/api/v0/invoke",{
         method:"POST",
         headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify(query)
+        body:JSON.stringify({
+            service:"Mast.Caom.Filtered",
+            params:{
+                columns:"obsid,target_name,instrument_name,release_date",
+                filters:[
+                    {paramName:"obs_collection",values:["JWST"]},
+                    {paramName:"dataproduct_type",values:["image"]},
+                    {paramName:"dataRights",values:["PUBLIC"]}
+                ]
+            },
+            format:"json",
+            pagesize:1,
+            page: mode==="memory" ? Math.floor(Math.random()*40)+1 : 1
+        })
     });
 
-    const json = await res.json();
-    if(!json.data?.length) return;
+    const obs = (await search.json()).data?.[0];
+    if(!obs) return;
 
-    const obs = json.data[0];
-    const img =
-        `https://mast.stsci.edu/portal/Download/file/JWST/product/${obs.obs_id}_i2d.jpg`;
+    /* 2️⃣ отримуємо список продуктів */
+    const products = await fetch(
+        `https://mast.stsci.edu/api/v0.1/Download/fileList?obsid=${obs.obsid}`
+    );
+    const files = await products.json();
+
+    const jpg = files.find(f =>
+        f.productFilename.endsWith(".jpg") &&
+        f.productFilename.includes("i2d")
+    ) || files.find(f => f.productFilename.endsWith(".jpg"));
+
+    if(!jpg) return;
+
+    const imgURL =
+        `https://mast.stsci.edu/portal/Download/file?uri=mast:JWST/product/${jpg.productFilename}`;
 
     const payload = {
-        img,
-        target:obs.target_name,
-        instrument:obs.instrument_name,
-        release:obs.release_date,
-        mode:currentMode,
-        time:Date.now()
+        img: imgURL,
+        target: obs.target_name,
+        instrument: obs.instrument_name,
+        release: obs.release_date,
+        time: Date.now()
     };
 
     localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
@@ -187,14 +172,10 @@ function apply(d){
     const bg = document.getElementById("jwst-bg");
     bg.style.backgroundImage = `url(${d.img})`;
     bg.style.opacity = "1";
+    bg.style.animation = "driftSlow 300s linear infinite";
 
-    bg.style.animation =
-        d.mode==="silence"
-            ? "driftSoft 300s linear infinite"
-            : "driftMedium 180s linear infinite";
-
-    document.getElementById("modeLabel").textContent =
-        d.mode==="silence"?"Тиша":d.mode==="memory"?"Памʼять":"Новизна";
+    document.getElementById("mode").textContent =
+        mode==="silence"?"Тиша":mode==="memory"?"Памʼять":"Новизна";
 
     document.getElementById("meta").innerHTML =
         `Ціль: ${d.target}<br>
@@ -203,15 +184,14 @@ function apply(d){
 }
 
 function setMode(m){
-    currentMode = m;
-    document.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
-    event.target.classList.add("active");
+    mode = m;
+    localStorage.removeItem(CACHE_KEY);
     loadJWST();
 }
 
 function toggleIR(){
-    irEnabled = !irEnabled;
-    document.getElementById("jwst-bg").classList.toggle("ir", irEnabled);
+    ir = !ir;
+    document.getElementById("jwst-bg").classList.toggle("ir", ir);
 }
 
 loadJWST();
