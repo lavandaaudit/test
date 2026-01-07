@@ -2,27 +2,24 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>ibonarium :: JWST API Observer</title>
+<title>ibonarium :: JWST Live Viewer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{
-    width:100%;
-    height:100%;
-    background:#000;
-    color:#cfefff;
+    width:100%;height:100%;
+    background:#000;color:#cfefff;
     font-family:Inter,system-ui,monospace;
     overflow:hidden;
 }
 
 #jwst-bg{
-    position:fixed;
-    inset:0;
+    position:fixed;inset:0;
     background-size:cover;
     background-position:center;
     opacity:0;
-    transition:opacity 1.8s ease, filter .8s ease;
+    transition:opacity 2s ease, filter 1s ease;
 }
 
 .ir{
@@ -30,18 +27,14 @@ html,body{
 }
 
 #overlay{
-    position:fixed;
-    inset:0;
+    position:fixed;inset:0;
     background:radial-gradient(circle at center, rgba(0,0,0,0.25), #000 80%);
     pointer-events:none;
 }
 
 #controls{
-    position:absolute;
-    top:16px;
-    left:16px;
-    display:flex;
-    gap:8px;
+    position:absolute;top:16px;left:16px;
+    display:flex;gap:8px;
 }
 
 button{
@@ -60,9 +53,7 @@ button.active{
 }
 
 #panel{
-    position:absolute;
-    bottom:16px;
-    left:16px;
+    position:absolute;bottom:16px;left:16px;
     background:rgba(0,0,0,0.45);
     backdrop-filter:blur(6px);
     padding:12px 16px;
@@ -73,7 +64,6 @@ button.active{
 }
 </style>
 </head>
-
 <body>
 
 <div id="jwst-bg"></div>
@@ -98,71 +88,91 @@ const API_KEY = "a1686b45-a59a-478c-85a3-cc44c95ea90e";
 
 let currentMode = "memory";
 let irOn = false;
+let images = []; // Масив для превʼю
+let lastIndex = -1;
 
-// Встановлюємо режим
+// Встановлення режиму
 function setMode(mode){
     currentMode = mode;
     document.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
     event.target.classList.add("active");
-    fetchImages();
+    showNextImage();
 }
 
-// Перемикач IR
+// IR-фільтр
 function toggleIR(){
     irOn = !irOn;
     document.getElementById("jwst-bg").classList.toggle("ir", irOn);
 }
 
-// Завантаження фото
-async function fetchImages(){
-    document.getElementById("modeLabel").textContent = currentMode;
-
+// Завантажуємо останні 50 фото з JWST API
+async function loadImages(){
     try{
         const url = `https://jwstapi.com/api/v1/images?key=${API_KEY}&limit=50`;
         const res = await fetch(url);
         const json = await res.json();
 
-        if(!json || !json.data || !json.data.length){
-            console.warn("JWST API не повернув дані");
-            return;
-        }
-
-        let selected;
-
-        if(currentMode === "novelty"){
-            selected = json.data[0]; // найновіше
-        } else if(currentMode === "memory"){
-            selected = json.data[Math.floor(Math.random() * Math.min(json.data.length,30))]; // випадкове
+        if(json && json.data && json.data.length){
+            // Фільтруємо лише ті, які мають previewUrl або downloadUrl
+            images = json.data.filter(i => i.previewUrl || i.downloadUrl)
+                              .map(i => ({
+                                  url: i.previewUrl || i.downloadUrl,
+                                  title: i.title || "—",
+                                  instrument: i.instrument || "—",
+                                  date: i.obsDate || "—"
+                              }));
+            showNextImage();
         } else {
-            selected = json.data[json.data.length - 1]; // тиша - останнє
+            console.warn("JWST API не повернув зображень");
         }
-
-        showImage(selected);
-
     } catch(e){
-        console.error("Помилка при fetch JWST API:", e);
+        console.error("Помилка при завантаженні JWST API:", e);
     }
 }
 
-// Показ фото та метаданих
-function showImage(item){
-    if(!item.downloadUrl){
-        console.warn("Немає URL для зображення", item);
-        return;
+// Показ наступного фото залежно від режиму
+function showNextImage(){
+    if(!images.length) return;
+
+    let selected;
+
+    if(currentMode === "novelty"){
+        selected = images[0]; // найновіше
+    } else if(currentMode === "memory"){
+        const idx = Math.floor(Math.random() * Math.min(images.length,30));
+        selected = images[idx];
+    } else { // Тиша
+        selected = images[images.length - 1];
     }
 
+    lastIndex = images.indexOf(selected);
+    displayImage(selected);
+}
+
+// Показ зображення та метаданих
+function displayImage(item){
     const bg = document.getElementById("jwst-bg");
-    bg.style.backgroundImage = `url(${item.downloadUrl})`;
+    bg.style.backgroundImage = `url(${item.url})`;
     bg.style.opacity = "1";
 
     document.getElementById("meta").innerHTML =
-        `Назва: ${item.title || "—"}<br>` +
-        `Камера: ${item.instrument || "—"}<br>` +
-        `Дата: ${item.obsDate || "—"}`;
+        `Назва: ${item.title}<br>` +
+        `Камера: ${item.instrument}<br>` +
+        `Дата: ${item.date}`;
 }
 
+// Автооновлення кожні 60 секунд (повільний фон)
+setInterval(()=>{
+    if(images.length && currentMode !== "novelty"){
+        let nextIndex = (lastIndex + 1) % images.length;
+        lastIndex = nextIndex;
+        displayImage(images[nextIndex]);
+    }
+}, 60000); // змінюємо фото кожну хвилину
+
 // Перший запуск
-fetchImages();
+document.getElementById("modeLabel").textContent = currentMode;
+loadImages();
 </script>
 
 </body>
