@@ -2,24 +2,75 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>ibonarium :: JWST API key mode</title>
+<title>ibonarium :: JWST API Observer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#000;color:#cfefff;font-family:Inter,system-ui,monospace;overflow:hidden;}
+html,body{
+    width:100%;
+    height:100%;
+    background:#000;
+    color:#cfefff;
+    font-family:Inter,system-ui,monospace;
+    overflow:hidden;
+}
 
-#jwst-bg{position:fixed;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.8s ease, filter .8s ease;}
+#jwst-bg{
+    position:fixed;
+    inset:0;
+    background-size:cover;
+    background-position:center;
+    opacity:0;
+    transition:opacity 1.8s ease, filter .8s ease;
+}
 
-.ir{filter:brightness(0.85)contrast(1.25)saturate(1.3)hue-rotate(35deg);}
+.ir{
+    filter:brightness(0.85) contrast(1.25) saturate(1.3) hue-rotate(35deg);
+}
 
-#overlay{position:fixed;inset:0;background:radial-gradient(circle at center,rgba(0,0,0,0.25),#000 80%);pointer-events:none;}
+#overlay{
+    position:fixed;
+    inset:0;
+    background:radial-gradient(circle at center, rgba(0,0,0,0.25), #000 80%);
+    pointer-events:none;
+}
 
-#controls{position:absolute;top:16px;left:16px;display:flex;gap:8px;}
-button{background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);color:#cfefff;padding:6px 10px;border-radius:10px;cursor:pointer;font-size:13px;}
-button.active{border-color:#fff;color:#fff;}
+#controls{
+    position:absolute;
+    top:16px;
+    left:16px;
+    display:flex;
+    gap:8px;
+}
 
-#panel{position:absolute;bottom:16px;left:16px;background:rgba(0,0,0,0.45);backdrop-filter:blur(6px);padding:12px 16px;border-radius:12px;font-size:14px;line-height:1.5;max-width:420px;}
+button{
+    background:rgba(0,0,0,0.45);
+    border:1px solid rgba(255,255,255,0.15);
+    color:#cfefff;
+    padding:6px 10px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:13px;
+}
+
+button.active{
+    border-color:#fff;
+    color:#fff;
+}
+
+#panel{
+    position:absolute;
+    bottom:16px;
+    left:16px;
+    background:rgba(0,0,0,0.45);
+    backdrop-filter:blur(6px);
+    padding:12px 16px;
+    border-radius:12px;
+    font-size:14px;
+    line-height:1.5;
+    max-width:420px;
+}
 </style>
 </head>
 
@@ -42,61 +93,75 @@ button.active{border-color:#fff;color:#fff;}
 </div>
 
 <script>
-const API_KEY = "a1686b45-a59a-478c-85a3-cc44c95ea90e"; // твій API ключ
+// ====== Твій JWST API ключ ======
+const API_KEY = "a1686b45-a59a-478c-85a3-cc44c95ea90e";
+
 let currentMode = "memory";
 let irOn = false;
 
-// встановлюємо режим
-function setMode(m){
-    currentMode = m;
+// Встановлюємо режим
+function setMode(mode){
+    currentMode = mode;
     document.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
     event.target.classList.add("active");
     fetchImages();
 }
 
+// Перемикач IR
 function toggleIR(){
     irOn = !irOn;
     document.getElementById("jwst-bg").classList.toggle("ir", irOn);
 }
 
-// завантажити фото
+// Завантаження фото
 async function fetchImages(){
     document.getElementById("modeLabel").textContent = currentMode;
 
-    // ключ + URL
-    const url = `https://jwstapi.com/api/v1/images?key=${API_KEY}&limit=50`;
-    const res = await fetch(url);
-    const json = await res.json();
+    try{
+        const url = `https://jwstapi.com/api/v1/images?key=${API_KEY}&limit=50`;
+        const res = await fetch(url);
+        const json = await res.json();
 
-    if(!json || !json.data || !json.data.length) return;
+        if(!json || !json.data || !json.data.length){
+            console.warn("JWST API не повернув дані");
+            return;
+        }
 
-    let selected;
+        let selected;
 
-    if(currentMode === "novelty"){
-        // найновіше — перший
-        selected = json.data[0];
-    } else if(currentMode === "memory"){
-        // випадкове з перших 30
-        selected = json.data[Math.floor(Math.random() * Math.min(json.data.length,30))];
-    } else {
-        // Тиша — найспокійніший (останній у списку)
-        selected = json.data[json.data.length - 1];
+        if(currentMode === "novelty"){
+            selected = json.data[0]; // найновіше
+        } else if(currentMode === "memory"){
+            selected = json.data[Math.floor(Math.random() * Math.min(json.data.length,30))]; // випадкове
+        } else {
+            selected = json.data[json.data.length - 1]; // тиша - останнє
+        }
+
+        showImage(selected);
+
+    } catch(e){
+        console.error("Помилка при fetch JWST API:", e);
     }
-
-    showImage(selected);
 }
 
+// Показ фото та метаданих
 function showImage(item){
+    if(!item.downloadUrl){
+        console.warn("Немає URL для зображення", item);
+        return;
+    }
+
     const bg = document.getElementById("jwst-bg");
-    bg.style.backgroundImage = `url(${item.imageUrl})`;
+    bg.style.backgroundImage = `url(${item.downloadUrl})`;
     bg.style.opacity = "1";
 
     document.getElementById("meta").innerHTML =
-        `Назва: ${item.title || "—"}<br>
-         Камера: ${item.instrument || "—"}<br>
-         Дата: ${item.obsDate || "—"}`;
+        `Назва: ${item.title || "—"}<br>` +
+        `Камера: ${item.instrument || "—"}<br>` +
+        `Дата: ${item.obsDate || "—"}`;
 }
 
+// Перший запуск
 fetchImages();
 </script>
 
