@@ -40,7 +40,7 @@ aside{
 
 h2{
     font-size:12px;
-    opacity:0.7;
+    opacity:0.6;
     margin-bottom:10px;
 }
 
@@ -56,24 +56,12 @@ h2{
     font-size:15px;
 }
 
-section{
-    position:relative;
-    background:#000;
-}
-
-canvas{
+iframe{
     width:100%;
     height:100%;
-    display:block;
+    border:none;
+    filter:contrast(115%) brightness(110%);
     background:#000;
-}
-
-footer{
-    position:absolute;
-    bottom:10px;
-    right:16px;
-    font-size:11px;
-    opacity:0.4;
 }
 </style>
 </head>
@@ -89,60 +77,24 @@ footer{
 
 <aside>
     <h2>Реальне джерело</h2>
-
     <div class="metric"><span>Network</span><strong>e-CALLISTO</strong></div>
     <div class="metric"><span>Station</span><strong>Birr</strong></div>
     <div class="metric"><span>Frequency</span><strong>~45 – 870 MHz</strong></div>
-    <div class="metric"><span>UTC</span><strong id="utc">—</strong></div>
+    <div class="metric"><span>Data type</span><strong>Solar radio spectrogram</strong></div>
 
     <h2 style="margin-top:20px">Ібонаріум</h2>
     <div class="metric"><span>Field state</span><strong>Structured chaos</strong></div>
     <div class="metric"><span>Interpretation</span><strong>Active vacuum</strong></div>
 </aside>
 
-<section>
-    <canvas id="view"></canvas>
-    <footer>radio noise ≠ silence</footer>
-</section>
+<!-- РЕАЛЬНИЙ e-CALLISTO -->
+<iframe 
+    src="https://www.e-callisto.org/quicklook/Birr/"
+    loading="lazy"
+    referrerpolicy="no-referrer">
+</iframe>
 
 </main>
-
-<script>
-const STATION = "Birr";
-const URL = `https://www.e-callisto.org/quicklook/${STATION}/latest.png`;
-
-const canvas = document.getElementById("view");
-const ctx = canvas.getContext("2d");
-const utc = document.getElementById("utc");
-
-function resize(){
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
-}
-window.addEventListener("resize", resize);
-resize();
-
-async function loadSpectrogram(){
-    try{
-        const res = await fetch(URL, { cache: "no-store" });
-        const blob = await res.blob();
-        const img = new Image();
-        img.onload = () => {
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            URL.revokeObjectURL(img.src);
-        };
-        img.src = URL.createObjectURL(blob);
-        utc.textContent = new Date().toUTCString();
-    }catch(e){
-        ctx.fillStyle = "#f55";
-        ctx.fillText("DATA BLOCKED", 20, 40);
-    }
-}
-
-loadSpectrogram();
-setInterval(loadSpectrogram, 5 * 60 * 1000);
-</script>
 
 </body>
 </html>
