@@ -5,59 +5,100 @@
     <title>ibonarium.radio.callisto</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        html,body{
-            width:100%;
-            height:100%;
-            background:#000;
-            color:#cfefff;
-            font-family:Inter,system-ui,monospace;
-            overflow:hidden;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        header{
-            height:48px;
-            padding:10px 18px;
-            border-bottom:1px solid rgba(255,255,255,0.08);
-            display:flex;
-            justify-content:space-between;
-            font-size:13px;
-            letter-spacing:1px;
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #cfefff;
+            font-family: Inter, system-ui, monospace;
+            overflow: hidden;
         }
-        main{
-            display:grid;
-            grid-template-columns:360px 1fr;
-            height:calc(100% - 48px);
+        header {
+            height: 48px;
+            padding: 10px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            letter-spacing: 1px;
         }
-        aside{
-            padding:14px;
-            border-right:1px solid rgba(255,255,255,0.08);
-            overflow-y:auto;
+        main {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            height: calc(100% - 48px);
         }
-        h2{
-            font-size:12px;
-            opacity:0.6;
-            margin-bottom:10px;
+        aside {
+            padding: 14px;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            overflow-y: auto;
         }
-        .metric{
-            margin-bottom:14px;
+        h2 {
+            font-size: 12px;
+            opacity: 0.6;
+            margin-bottom: 10px;
         }
-        .metric span{
-            display:block;
-            font-size:11px;
-            opacity:0.5;
+        .metric {
+            margin-bottom: 14px;
         }
-        .metric strong{
-            font-size:15px;
+        .metric span {
+            display: block;
+            font-size: 11px;
+            opacity: 0.5;
         }
-        iframe{
-            width:100%;
-            height:100%;
-            border:none;
-            filter:contrast(115%) brightness(110%);
-            background:#000;
+        .metric strong {
+            font-size: 15px;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            filter: contrast(115%) brightness(110%);
+            background: #000;
+            transform: scale(0.9); /* Зменшуємо спектрограму на 10% для меншого вигляду */
+            transform-origin: top left;
+        }
+
+        /* Responsive для мобільних та інших пристроїв */
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr; /* Стек: aside над iframe */
+                grid-template-rows: auto 1fr;
+            }
+            aside {
+                border-right: none;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+                max-height: 200px; /* Обмежуємо висоту aside на мобільних */
+            }
+            header {
+                font-size: 11px; /* Менший текст для мобільних */
+                padding: 8px 12px;
+            }
+            iframe {
+                transform: scale(0.85); /* Ще трохи зменшуємо на мобільних */
+            }
+            body {
+                overflow-y: auto; /* Дозволяємо скрол на мобільних, якщо потрібно */
+            }
+        }
+
+        @media (max-width: 480px) {
+            aside {
+                padding: 10px;
+            }
+            .metric strong {
+                font-size: 13px;
+            }
+            .metric span {
+                font-size: 10px;
+            }
         }
     </style>
-    <!-- Додаємо CSP для безпечного вбудовування iframe на GitHub Pages -->
+    <!-- CSP для GitHub Pages та безпечного iframe -->
     <meta http-equiv="Content-Security-Policy" content="frame-src https://realtime.obs-nancay.fr https://obs-nancay.fr;">
 </head>
 <body>
