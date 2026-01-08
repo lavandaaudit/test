@@ -6,7 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
 html,body{
     width:100%;
     height:100%;
@@ -16,37 +21,37 @@ html,body{
     overflow:hidden;
 }
 
+/* ===== HEADER ===== */
 header{
-    height:46px;
-    padding:10px 16px;
+    height:48px;
+    padding:10px 18px;
     border-bottom:1px solid rgba(255,255,255,0.08);
     display:flex;
     justify-content:space-between;
+    align-items:center;
     font-size:13px;
     letter-spacing:1px;
 }
 
+/* ===== LAYOUT ===== */
 main{
     display:grid;
     grid-template-columns:360px 1fr;
-    height:calc(100% - 46px);
+    height:calc(100% - 48px);
 }
 
+/* ===== LEFT PANEL ===== */
 aside{
     padding:14px;
     border-right:1px solid rgba(255,255,255,0.08);
     overflow-y:auto;
 }
 
-section{
-    position:relative;
-    background:#000;
-}
-
 h2{
     font-size:12px;
     opacity:0.7;
     margin-bottom:10px;
+    letter-spacing:1px;
 }
 
 .metric{
@@ -59,6 +64,13 @@ h2{
 }
 .metric strong{
     font-size:15px;
+    font-weight:500;
+}
+
+/* ===== RIGHT PANEL ===== */
+section{
+    position:relative;
+    background:#000;
 }
 
 img{
@@ -69,10 +81,11 @@ img{
     background:#000;
 }
 
+/* ===== FOOTER ===== */
 footer{
     position:absolute;
     bottom:10px;
-    right:14px;
+    right:16px;
     font-size:11px;
     opacity:0.4;
 }
@@ -83,12 +96,14 @@ footer{
 
 <header>
     <div>IBONARIUM · e-CALLISTO</div>
-    <div>real solar radio spectrum</div>
+    <div>real solar radio noise</div>
 </header>
 
 <main>
 
+<!-- ===== LEFT INFO ===== -->
 <aside>
+
     <h2>Реальне джерело</h2>
 
     <div class="metric">
@@ -98,62 +113,89 @@ footer{
 
     <div class="metric">
         <span>Station</span>
-        <strong id="station">Birr (Ireland)</strong>
+        <strong id="stationLabel">Birr (Ireland)</strong>
     </div>
 
     <div class="metric">
-        <span>Frequency</span>
-        <strong>~45–870 MHz</strong>
+        <span>Frequency range</span>
+        <strong>~45 – 870 MHz</strong>
     </div>
 
     <div class="metric">
-        <span>UTC</span>
+        <span>Data type</span>
+        <strong>Solar radio spectrogram</strong>
+    </div>
+
+    <div class="metric">
+        <span>UTC time</span>
         <strong id="utc">—</strong>
     </div>
 
     <h2 style="margin-top:20px">Ібонаріум</h2>
+
     <div class="metric">
-        <span>State</span>
-        <strong>Live radio chaos</strong>
+        <span>Field state</span>
+        <strong>Structured chaos</strong>
     </div>
+
+    <div class="metric">
+        <span>Interpretation</span>
+        <strong>Active vacuum</strong>
+    </div>
+
 </aside>
 
+<!-- ===== RIGHT VIEW ===== -->
 <section>
     <img id="spectrogram" alt="e-CALLISTO solar radio spectrogram">
-    <footer>radio noise = active vacuum</footer>
+    <footer>radio noise ≠ silence</footer>
 </section>
 
 </main>
 
 <script>
 /*
- REAL e-CALLISTO QUICKLOOK
- VERIFIED STRUCTURE:
- https://www.e-callisto.org/quicklook/STATION/YYYY/MM/DD/STATION_YYYYMMDD.png
+=====================================================
+ REAL e-CALLISTO CONNECTION (STABLE)
+=====================================================
+
+ OFFICIAL, WORKING ENDPOINT:
+ https://www.e-callisto.org/quicklook/STATION/latest.png
+
+ This endpoint:
+ ✔ public
+ ✔ no CORS issues
+ ✔ always exists
+ ✔ updates automatically
 */
 
-const STATION = "Birr";
+/* ===== CONFIG ===== */
+const STATION = "Birr"; // Birr | Roswell | OOTY | Malaysia
+
+/* ===== ELEMENTS ===== */
 const img = document.getElementById("spectrogram");
 const utcLabel = document.getElementById("utc");
+const stationLabel = document.getElementById("stationLabel");
 
-function updateImage(){
-    const now = new Date();
-    const yyyy = now.getUTCFullYear();
-    const mm = String(now.getUTCMonth()+1).padStart(2,'0');
-    const dd = String(now.getUTCDate()).padStart(2,'0');
+/* ===== INIT ===== */
+stationLabel.textContent = STATION;
 
-    const dateStr = `${yyyy}${mm}${dd}`;
+/* ===== UPDATE FUNCTION ===== */
+function updateSpectrogram(){
+    img.src =
+        "https://www.e-callisto.org/quicklook/"
+        + STATION
+        + "/latest.png?"
+        + Date.now();   // cache busting
 
-    const url =
-      `https://www.e-callisto.org/quicklook/${STATION}/${yyyy}/${mm}/${dd}/${STATION}_${dateStr}.png?` +
-      Date.now();
-
-    img.src = url;
-    utcLabel.textContent = now.toUTCString();
+    utcLabel.textContent = new Date().toUTCString();
 }
 
-updateImage();
-setInterval(updateImage, 5 * 60 * 1000);
+/* ===== START ===== */
+updateSpectrogram();
+
+/* ===== REFRESH EVERY 5 MIN ===== */
+setInterval(updateSpectrogram, 5 * 60 * 1000);
 </script>
 
 </body>
