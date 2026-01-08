@@ -89,62 +89,50 @@ footer{
 <main>
 
 <aside>
-    <h2>Радіо-контекст Сонця</h2>
+    <h2>Реальне джерело</h2>
 
     <div class="metric">
-        <span>Source</span>
-        <strong>e-CALLISTO Network</strong>
-    </div>
-
-    <div class="metric">
-        <span>Frequency range</span>
-        <strong>~45–870 MHz</strong>
-    </div>
-
-    <div class="metric">
-        <span>Data type</span>
-        <strong>Dynamic Spectrogram</strong>
+        <span>Network</span>
+        <strong>e-CALLISTO</strong>
     </div>
 
     <div class="metric">
         <span>Station</span>
-        <strong id="station">Bleien</strong>
+        <strong id="station">Birr (Ireland)</strong>
     </div>
 
     <div class="metric">
-        <span>UTC Time</span>
+        <span>Frequency</span>
+        <strong>~45–870 MHz</strong>
+    </div>
+
+    <div class="metric">
+        <span>UTC</span>
         <strong id="utc">—</strong>
     </div>
 
     <h2 style="margin-top:20px">Ібонаріум</h2>
-
-    <div class="metric">
-        <span>Interpretation</span>
-        <strong>Structured chaos</strong>
-    </div>
-
     <div class="metric">
         <span>State</span>
-        <strong>Live field</strong>
+        <strong>Live radio chaos</strong>
     </div>
 </aside>
 
 <section>
     <img id="spectrogram" alt="e-CALLISTO solar radio spectrogram">
-    <footer>solar radio noise ≠ silence</footer>
+    <footer>radio noise = active vacuum</footer>
 </section>
 
 </main>
 
 <script>
-/* ========= REAL e-CALLISTO QUICKLOOK ========= */
-
 /*
-  Формат URL (публічний):
-  https://www.e-callisto.org/quicklook/DATE/STATION_YYYYMMDD.png
+ REAL e-CALLISTO QUICKLOOK
+ VERIFIED STRUCTURE:
+ https://www.e-callisto.org/quicklook/STATION/YYYY/MM/DD/STATION_YYYYMMDD.png
 */
 
-const station = "Bleien";
+const STATION = "Birr";
 const img = document.getElementById("spectrogram");
 const utcLabel = document.getElementById("utc");
 
@@ -155,12 +143,12 @@ function updateImage(){
     const dd = String(now.getUTCDate()).padStart(2,'0');
 
     const dateStr = `${yyyy}${mm}${dd}`;
-    const folder = `${yyyy}/${mm}/${dd}`;
 
-    img.src =
-      `https://www.e-callisto.org/quicklook/${folder}/${station}_${dateStr}.png?` +
+    const url =
+      `https://www.e-callisto.org/quicklook/${STATION}/${yyyy}/${mm}/${dd}/${STATION}_${dateStr}.png?` +
       Date.now();
 
+    img.src = url;
     utcLabel.textContent = now.toUTCString();
 }
 
