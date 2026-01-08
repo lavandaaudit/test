@@ -2,8 +2,14 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>ibonarium.radio.callisto</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="referrer" content="no-referrer">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Ibonarium Cosmo Dynamics LAB LIVE</title>
+
+    <!-- GOOGLE FONTS: Cinzel -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
     <style>
         * {
             margin: 0;
@@ -14,116 +20,196 @@
             width: 100%;
             height: 100%;
             background: #000;
-            color: #cfefff;
-            font-family: Inter, system-ui, monospace;
             overflow: hidden;
+            color: #cfefff;
+            font-family: 'Cinzel', serif;
         }
-        header {
-            height: 48px;
-            padding: 10px 18px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+
+        /* STARFIELD */
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+        }
+
+        /* CONTENT */
+        .container {
+            position: relative;
+            z-index: 1;
+            height: 100%;
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            font-size: 13px;
-            letter-spacing: 1px;
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
-        main {
+
+        .main-title {
+            font-size: 48px;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            text-shadow: 0 0 20px #ffcc00;
+            color: #ffcc00;
+            transition: all 0.3s ease;
+        }
+        .main-title:hover {
+            text-shadow: 0 0 40px #ffcc00;
+            transform: scale(1.05);
+        }
+
+        /* Два ряди — адаптивно */
+        .row {
             display: grid;
-            grid-template-columns: 360px 1fr;
-            height: calc(100% - 48px);
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
         }
-        aside {
-            padding: 14px;
-            border-right: 1px solid rgba(255,255,255,0.08);
-            overflow-y: auto;
+
+        .block {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            border-radius: 16px;
+            box-shadow: 0 0 25px rgba(255, 204, 0, 0.6);
         }
-        h2 {
-            font-size: 12px;
-            opacity: 0.6;
-            margin-bottom: 10px;
-        }
-        .metric {
-            margin-bottom: 14px;
-        }
-        .metric span {
-            display: block;
-            font-size: 11px;
-            opacity: 0.5;
-        }
-        .metric strong {
-            font-size: 15px;
-        }
-        iframe {
+
+        .block img {
             width: 100%;
             height: 100%;
-            border: none;
-            filter: contrast(115%) brightness(110%);
-            background: #000;
-            transform: scale(0.9); /* Зменшуємо спектрограму на 10% для меншого вигляду */
-            transform-origin: top left;
+            object-fit: cover;
+            display: block;
         }
 
-        /* Responsive для мобільних та інших пристроїв */
+        /* Червоний відтінок для LASCO C2 */
+        .red-gif img {
+            filter: hue-rotate(0deg) saturate(1.6) brightness(1.1);
+        }
+
+        /* Синій відтінок для LASCO C3 */
+        .blue-gif img {
+            filter: hue-rotate(200deg) saturate(1.6) brightness(1.1);
+        }
+
+        /* Золотиста рамка для SDO фото */
+        .sdo-photo {
+            border: 3px solid #ffcc00;
+        }
+
+        .note {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.8;
+            letter-spacing: 0.05em;
+            margin-top: 20px;
+        }
+
+        /* Адаптивність */
+        @media (max-width: 1024px) {
+            .row { grid-template-columns: repeat(2, 1fr); }
+            .main-title { font-size: 38px; }
+        }
         @media (max-width: 768px) {
-            main {
-                grid-template-columns: 1fr; /* Стек: aside над iframe */
-                grid-template-rows: auto 1fr;
-            }
-            aside {
-                border-right: none;
-                border-bottom: 1px solid rgba(255,255,255,0.08);
-                max-height: 200px; /* Обмежуємо висоту aside на мобільних */
-            }
-            header {
-                font-size: 11px; /* Менший текст для мобільних */
-                padding: 8px 12px;
-            }
-            iframe {
-                transform: scale(0.85); /* Ще трохи зменшуємо на мобільних */
-            }
-            body {
-                overflow-y: auto; /* Дозволяємо скрол на мобільних, якщо потрібно */
-            }
+            .row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .main-title { font-size: 32px; }
+            .container { padding: 20px; }
         }
-
         @media (max-width: 480px) {
-            aside {
-                padding: 10px;
-            }
-            .metric strong {
-                font-size: 13px;
-            }
-            .metric span {
-                font-size: 10px;
-            }
+            .row { grid-template-columns: 1fr; }
+            .main-title { font-size: 28px; }
+            .note { font-size: 12px; }
         }
     </style>
-    <!-- CSP для GitHub Pages та безпечного iframe -->
-    <meta http-equiv="Content-Security-Policy" content="frame-src https://realtime.obs-nancay.fr https://obs-nancay.fr;">
 </head>
 <body>
-    <header>
-        <div>IBONARIUM · ORFEES</div>
-        <div>real solar radio noise</div>
-    </header>
-    <main>
-        <aside>
-            <h2>Реальне джерело</h2>
-            <div class="metric"><span>Observatory</span><strong>ORFEES (Nançay, France)</strong></div>
-            <div class="metric"><span>Frequency</span><strong>144 – 1004 MHz</strong></div>
-            <div class="metric"><span>Data type</span><strong>Real-time solar radio spectrogram</strong></div>
-            <div class="metric"><span>Update</span><strong>Automatic (every minute or faster)</strong></div>
-            <h2 style="margin-top:20px">Ібонаріум</h2>
-            <div class="metric"><span>Field state</span><strong>Structured chaos</strong></div>
-            <div class="metric"><span>Interpretation</span><strong>Active vacuum</strong></div>
-        </aside>
-        <!-- Реал-тайм спектрограма ORFEES (Nançay Observatory) -->
-        <iframe
-            src="https://realtime.obs-nancay.fr/orfees/"
-            loading="lazy"
-            referrerpolicy="no-referrer"
-            sandbox="allow-scripts allow-same-origin">
-        </iframe>
-    </main>
+    <canvas id="stars"></canvas>
+
+    <div class="container">
+        <!-- Клікабельний заголовок → Телеграм -->
+        <div class="main-title" onclick="window.open('https://t.me/ibonariumcosmodynamicslablive', '_blank')">
+            Ibonarium Cosmo Dynamics LAB LIVE
+        </div>
+
+        <!-- Перший ряд: LASCO C2 (червоний) + 3 фото SDO -->
+        <div class="row">
+            <div class="block red-gif">
+                <img src="https://soho.nascom.nasa.gov/data/LATEST/current_c2.gif" alt="LASCO C2 animation" loading="lazy">
+            </div>
+            <div class="block sdo-photo">
+                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0171.jpg" alt="AIA 171 Å" loading="lazy">
+            </div>
+            <div class="block sdo-photo">
+                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0193.jpg" alt="AIA 193 Å" loading="lazy">
+            </div>
+            <div class="block sdo-photo">
+                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0304.jpg" alt="AIA 304 Å" loading="lazy">
+            </div>
+        </div>
+
+        <!-- Другий ряд: LASCO C3 (синій) + 3 інші фото SDO -->
+        <div class="row">
+            <div class="block blue-gif">
+                <img src="https://soho.nascom.nasa.gov/data/LATEST/current_c3.gif" alt="LASCO C3 animation" loading="lazy">
+            </div>
+            <div class="block sdo-photo">
+                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0211.jpg" alt="AIA 211 Å" loading="lazy">
+            </div>
+            <div class="block sdo-photo">
+                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0131.jpg" alt="AIA 131 Å" loading="lazy">
+            </div>
+            <div class="block sdo-photo">
+                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0094.jpg" alt="AIA 094 Å" loading="lazy">
+            </div>
+        </div>
+
+        <div class="note">
+            NASA/ESA SOHO LASCO + NASA SDO AIA • Реал-тайм спостереження Сонця
+        </div>
+    </div>
+
+    <script>
+        // ===== OFF-GRID STARFIELD =====
+        const canvas = document.getElementById("stars");
+        const ctx = canvas.getContext("2d");
+        let W, H;
+        let stars = [];
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+            stars = Array.from({ length: 180 }, () => ({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                z: Math.random() * W
+            }));
+        }
+
+        resize();
+        window.addEventListener("resize", resize);
+
+        function render() {
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.fillStyle = "#4dd2ff";
+            for (let s of stars) {
+                s.z -= 0.25; // Повільний політ зірок
+                if (s.z <= 0) s.z = W;
+
+                const k = 128 / s.z;
+                const x = (s.x - W / 2) * k + W / 2;
+                const y = (s.y - H / 2) * k + H / 2;
+
+                if (x > 0 && x < W && y > 0 && y < H) {
+                    const size = (1 - s.z / W) * 3;
+                    ctx.fillRect(x, y, size, size);
+                }
+            }
+            requestAnimationFrame(render);
+        }
+        render();
+    </script>
 </body>
 </html>
