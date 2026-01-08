@@ -5,9 +5,6 @@
 <title>ibonarium.radio.callisto</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- 🔑 CRITICAL FIX -->
-<meta name="referrer" content="no-referrer">
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{
@@ -64,11 +61,10 @@ section{
     background:#000;
 }
 
-img{
+canvas{
     width:100%;
     height:100%;
-    object-fit:contain;
-    image-rendering:pixelated;
+    display:block;
     background:#000;
 }
 
@@ -94,71 +90,58 @@ footer{
 <aside>
     <h2>Реальне джерело</h2>
 
-    <div class="metric">
-        <span>Network</span>
-        <strong>e-CALLISTO</strong>
-    </div>
-
-    <div class="metric">
-        <span>Station</span>
-        <strong id="stationLabel">Birr</strong>
-    </div>
-
-    <div class="metric">
-        <span>Frequency range</span>
-        <strong>~45 – 870 MHz</strong>
-    </div>
-
-    <div class="metric">
-        <span>UTC time</span>
-        <strong id="utc">—</strong>
-    </div>
+    <div class="metric"><span>Network</span><strong>e-CALLISTO</strong></div>
+    <div class="metric"><span>Station</span><strong>Birr</strong></div>
+    <div class="metric"><span>Frequency</span><strong>~45 – 870 MHz</strong></div>
+    <div class="metric"><span>UTC</span><strong id="utc">—</strong></div>
 
     <h2 style="margin-top:20px">Ібонаріум</h2>
-
-    <div class="metric">
-        <span>Field state</span>
-        <strong>Structured chaos</strong>
-    </div>
-
-    <div class="metric">
-        <span>Interpretation</span>
-        <strong>Active vacuum</strong>
-    </div>
+    <div class="metric"><span>Field state</span><strong>Structured chaos</strong></div>
+    <div class="metric"><span>Interpretation</span><strong>Active vacuum</strong></div>
 </aside>
 
 <section>
-    <!-- 🔑 CRITICAL FIX -->
-    <img id="spectrogram"
-         referrerpolicy="no-referrer"
-         alt="e-CALLISTO solar radio spectrogram">
+    <canvas id="view"></canvas>
     <footer>radio noise ≠ silence</footer>
 </section>
 
 </main>
 
 <script>
-/* ===== STABLE ENDPOINT ===== */
 const STATION = "Birr";
+const URL = `https://www.e-callisto.org/quicklook/${STATION}/latest.png`;
 
-const img = document.getElementById("spectrogram");
-const utcLabel = document.getElementById("utc");
-const stationLabel = document.getElementById("stationLabel");
+const canvas = document.getElementById("view");
+const ctx = canvas.getContext("2d");
+const utc = document.getElementById("utc");
 
-stationLabel.textContent = STATION;
+function resize(){
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+}
+window.addEventListener("resize", resize);
+resize();
 
-function updateSpectrogram(){
-    img.src =
-        "https://www.e-callisto.org/quicklook/"
-        + STATION
-        + "/latest.png?"
-        + Date.now();
-
-    utcLabel.textContent = new Date().toUTCString();
+async function loadSpectrogram(){
+    try{
+        const res = await fetch(URL, { cache: "no-store" });
+        const blob = await res.blob();
+        const img = new Image();
+        img.onload = () => {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(img.src);
+        };
+        img.src = URL.createObjectURL(blob);
+        utc.textContent = new Date().toUTCString();
+    }catch(e){
+        ctx.fillStyle = "#f55";
+        ctx.fillText("DATA BLOCKED", 20, 40);
+    }
 }
 
-updateSpectrogram();
-setInterval(updateSpectrogram, 5 * 60 * 1000);
+loadSpectrogram();
+setInterval(loadSpectrogram, 5 * 60 * 1000);
 </script>
 
 </body>
