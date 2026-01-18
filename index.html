@@ -3,98 +3,134 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IBONARIUM · 24/7 Wildlife Live</title>
+<title>IBONARIUM · Wildlife Pulse</title>
+
+<!-- Leaflet для карти -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Chart.js для графіків -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body {
-  width:100%;
-  min-height:100vh;
-  background:#000;
-  color:#cfefff;
-  font-family: system-ui, monospace;
-}
-header {
-  text-align:center;
-  padding:12px;
-  font-size:20px;
-  opacity:.8;
-  letter-spacing:.1em;
-}
-.container {
-  display:flex;
-  flex-direction:column;
-  gap:24px;
-  padding:12px;
-  align-items:center;
-}
-.video-wrapper {
-  position:relative;
-  width:100%;
-  max-width:720px;
-  padding-bottom:56.25%; /* 16:9 */
-}
-.video-wrapper iframe {
-  position:absolute;
-  top:0; left:0;
-  width:100%; height:100%;
-  border:0;
-}
-footer {
-  text-align:center;
-  font-size:10px;
-  opacity:.4;
-  margin:24px 0;
-}
-@media (max-width:768px){
-  .video-wrapper { max-width:100%; }
-}
+body { margin:0; padding:0; font-family:system-ui, monospace; background:#000; color:#fff;}
+header { text-align:center; padding:12px; font-size:20px; opacity:0.8; }
+#map { width:100%; height:60vh; }
+.container { display:flex; flex-direction:column; gap:24px; padding:12px; align-items:center; }
+.chart-container { width:100%; max-width:800px; }
+footer { text-align:center; font-size:10px; opacity:0.4; padding:12px; }
 </style>
 </head>
 <body>
 
-<header>IBONARIUM · 24/7 Wildlife Live</header>
+<header>IBONARIUM · Wildlife Pulse (iNaturalist + eBird)</header>
+
+<div id="map"></div>
 
 <div class="container">
-
-  <!-- 1. Африка / водопої -->
-  <div class="video-wrapper">
-    <iframe src="https://www.youtube-nocookie.com/embed/vr4o_AsrU1k?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&playsinline=1"
-      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe>
+  <div class="chart-container">
+    <canvas id="activityChart"></canvas>
   </div>
-
-  <!-- 2. Лісові тварини -->
-  <div class="video-wrapper">
-    <iframe src="https://www.youtube-nocookie.com/embed/F0GOOP82094?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&playsinline=1"
-      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe>
-  </div>
-
-  <!-- 3. Орангутани / джунглі -->
-  <div class="video-wrapper">
-    <iframe src="https://www.youtube-nocookie.com/embed/vBnErz43N1A?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&playsinline=1"
-      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe>
-  </div>
-
-  <!-- 4. Природа / документальні кадри -->
-  <div class="video-wrapper">
-    <iframe src="https://www.youtube-nocookie.com/embed/daqB3i9WYIY?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&playsinline=1"
-      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe>
-  </div>
-
-  <!-- 5. Птахи & білки / Cat TV -->
-  <div class="video-wrapper">
-    <iframe src="https://www.youtube-nocookie.com/embed/UEyEs8AE1ss?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&playsinline=1"
-      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe>
-  </div>
-
-  <!-- 6. Додатковий / плейлист -->
-  <div class="video-wrapper">
-    <iframe src="https://www.youtube-nocookie.com/embed/videoseries?list=PLi9AwLR0WFnHIGK1pvmiMrgSBWAe_Hft1&autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&playsinline=1"
-      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe>
-  </div>
-
 </div>
 
-<footer>IBONARIUM · 24/7 Wildlife Streams</footer>
+<footer>IBONARIUM · Live Wildlife Observations</footer>
+
+<script>
+// --------------------
+// 1. Ініціалізація карти
+// --------------------
+var map = L.map('map').setView([20,0], 2); // світ
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  attribution:'&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+// --------------------
+// 2. Підключення iNaturalist API (останнє 50 спостережень)
+// --------------------
+async function fetchiNat() {
+  const url = "https://api.inaturalist.org/v1/observations?order=desc&order_by=created_at&per_page=50";
+  const response = await fetch(url);
+  const data = await response.json();
+  return data.results;
+}
+
+// --------------------
+// 3. Підключення eBird API (останнє 50 спостережень для регіону lat/lng)
+// --------------------
+// Для eBird потрібен API key. Можна вставити свій ключ тут.
+const EBIRD_KEY = "YOUR_EBIRD_API_KEY";
+async function fetcheBird() {
+  // приклад координат: 48, 24 (Україна)
+  const lat=48, lng=24;
+  const url = `https://api.ebird.org/v2/data/obs/geo/recent?lat=${lat}&lng=${lng}&dist=500&back=7`;
+  const response = await fetch(url, {headers: {"X-eBirdApiToken": EBIRD_KEY}});
+  const data = await response.json();
+  return data;
+}
+
+// --------------------
+// 4. Обробка та візуалізація даних
+// --------------------
+async function renderData() {
+  const iNatData = await fetchiNat();
+  const eBirdData = await fetcheBird();
+
+  let allPoints = [];
+
+  // iNaturalist
+  iNatData.forEach(obs => {
+    if(obs.geojson){
+      const lat = obs.geojson.coordinates[1];
+      const lon = obs.geojson.coordinates[0];
+      const species = obs.species_guess || obs.taxon.name;
+      L.circleMarker([lat, lon], {color:'lime', radius:5, fillOpacity:0.7})
+        .bindPopup(`<b>${species}</b><br>${new Date(obs.time_observed_at).toLocaleString()}`)
+        .addTo(map);
+      allPoints.push({time:new Date(obs.time_observed_at), source:'iNaturalist'});
+    }
+  });
+
+  // eBird
+  eBirdData.forEach(obs => {
+    const lat = obs.lat;
+    const lon = obs.lng;
+    const species = obs.comName;
+    L.circleMarker([lat, lon], {color:'orange', radius:5, fillOpacity:0.7})
+      .bindPopup(`<b>${species}</b><br>${obs.obsDt}`)
+      .addTo(map);
+    allPoints.push({time:new Date(obs.obsDt), source:'eBird'});
+  });
+
+  // --------------------
+  // 5. Графік активності
+  // --------------------
+  // Групування за годинами останніх 48 годин
+  const now = new Date();
+  const hours = Array.from({length:48}, (_,i)=> new Date(now.getTime() - i*60*60*1000));
+  const labels = hours.map(h=>`${h.getHours()}:00`);
+  const iNatCounts = hours.map(h => allPoints.filter(p=>p.source==='iNaturalist' && p.time >= h && p.time < new Date(h.getTime()+3600000)).length);
+  const eBirdCounts = hours.map(h => allPoints.filter(p=>p.source==='eBird' && p.time >= h && p.time < new Date(h.getTime()+3600000)).length);
+
+  const ctx = document.getElementById('activityChart').getContext('2d');
+  new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: labels.reverse(),
+      datasets:[
+        {label:'iNaturalist', data:iNatCounts.reverse(), backgroundColor:'lime'},
+        {label:'eBird', data:eBirdCounts.reverse(), backgroundColor:'orange'}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{position:'top'}},
+      scales:{x:{stacked:true}, y:{stacked:true}}
+    }
+  });
+}
+
+renderData();
+</script>
 
 </body>
 </html>
