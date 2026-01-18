@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IBONARIUM · Wildlife Pulse</title>
+<title>IBONARIUM · Wildlife Pulse Live</title>
 
 <!-- Leaflet для карти -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -23,7 +23,7 @@ footer { text-align:center; font-size:10px; opacity:0.4; padding:12px; }
 </head>
 <body>
 
-<header>IBONARIUM · Wildlife Pulse (iNaturalist + eBird)</header>
+<header>IBONARIUM · Wildlife Pulse Live (iNaturalist + eBird)</header>
 
 <div id="map"></div>
 
@@ -36,16 +36,18 @@ footer { text-align:center; font-size:10px; opacity:0.4; padding:12px; }
 <footer>IBONARIUM · Live Wildlife Observations</footer>
 
 <script>
-// --------------------
-// 1. Ініціалізація карти
-// --------------------
-var map = L.map('map').setView([20,0], 2); // світ
+const EBIRD_KEY = "YOUR_EBIRD_API_KEY"; // встав свій ключ
+let map = L.map('map').setView([20,0], 2);
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   attribution:'&copy; OpenStreetMap contributors'
 }).addTo(map);
 
+let markersLayer = L.layerGroup().addTo(map);
+let activityChart;
+
 // --------------------
-// 2. Підключення iNaturalist API (останнє 50 спостережень)
+// Функція завантаження iNaturalist
 // --------------------
 async function fetchiNat() {
   const url = "https://api.inaturalist.org/v1/observations?order=desc&order_by=created_at&per_page=50";
@@ -55,13 +57,11 @@ async function fetchiNat() {
 }
 
 // --------------------
-// 3. Підключення eBird API (останнє 50 спостережень для регіону lat/lng)
+// Функція завантаження eBird
 // --------------------
-// Для eBird потрібен API key. Можна вставити свій ключ тут.
-const EBIRD_KEY = "YOUR_EBIRD_API_KEY";
 async function fetcheBird() {
-  // приклад координат: 48, 24 (Україна)
-  const lat=48, lng=24;
+  const lat = 48; // можна динамічно міняти
+  const lng = 24;
   const url = `https://api.ebird.org/v2/data/obs/geo/recent?lat=${lat}&lng=${lng}&dist=500&back=7`;
   const response = await fetch(url, {headers: {"X-eBirdApiToken": EBIRD_KEY}});
   const data = await response.json();
@@ -69,12 +69,12 @@ async function fetcheBird() {
 }
 
 // --------------------
-// 4. Обробка та візуалізація даних
+// Функція оновлення карти та графіку
 // --------------------
-async function renderData() {
+async function updateData() {
+  markersLayer.clearLayers();
   const iNatData = await fetchiNat();
   const eBirdData = await fetcheBird();
-
   let allPoints = [];
 
   // iNaturalist
@@ -85,7 +85,7 @@ async function renderData() {
       const species = obs.species_guess || obs.taxon.name;
       L.circleMarker([lat, lon], {color:'lime', radius:5, fillOpacity:0.7})
         .bindPopup(`<b>${species}</b><br>${new Date(obs.time_observed_at).toLocaleString()}`)
-        .addTo(map);
+        .addTo(markersLayer);
       allPoints.push({time:new Date(obs.time_observed_at), source:'iNaturalist'});
     }
   });
@@ -97,39 +97,49 @@ async function renderData() {
     const species = obs.comName;
     L.circleMarker([lat, lon], {color:'orange', radius:5, fillOpacity:0.7})
       .bindPopup(`<b>${species}</b><br>${obs.obsDt}`)
-      .addTo(map);
+      .addTo(markersLayer);
     allPoints.push({time:new Date(obs.obsDt), source:'eBird'});
   });
 
   // --------------------
-  // 5. Графік активності
+  // Графік активності за останні 48 годин
   // --------------------
-  // Групування за годинами останніх 48 годин
   const now = new Date();
   const hours = Array.from({length:48}, (_,i)=> new Date(now.getTime() - i*60*60*1000));
   const labels = hours.map(h=>`${h.getHours()}:00`);
   const iNatCounts = hours.map(h => allPoints.filter(p=>p.source==='iNaturalist' && p.time >= h && p.time < new Date(h.getTime()+3600000)).length);
   const eBirdCounts = hours.map(h => allPoints.filter(p=>p.source==='eBird' && p.time >= h && p.time < new Date(h.getTime()+3600000)).length);
 
-  const ctx = document.getElementById('activityChart').getContext('2d');
-  new Chart(ctx, {
-    type:'bar',
-    data:{
-      labels: labels.reverse(),
-      datasets:[
-        {label:'iNaturalist', data:iNatCounts.reverse(), backgroundColor:'lime'},
-        {label:'eBird', data:eBirdCounts.reverse(), backgroundColor:'orange'}
-      ]
-    },
-    options:{
-      responsive:true,
-      plugins:{legend:{position:'top'}},
-      scales:{x:{stacked:true}, y:{stacked:true}}
-    }
-  });
+  if(activityChart){
+    activityChart.data.labels = labels.reverse();
+    activityChart.data.datasets[0].data = iNatCounts.reverse();
+    activityChart.data.datasets[1].data = eBirdCounts.reverse();
+    activityChart.update();
+  } else {
+    const ctx = document.getElementById('activityChart').getContext('2d');
+    activityChart = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels: labels.reverse(),
+        datasets:[
+          {label:'iNaturalist', data:iNatCounts.reverse(), backgroundColor:'lime'},
+          {label:'eBird', data:eBirdCounts.reverse(), backgroundColor:'orange'}
+        ]
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:{position:'top'}},
+        scales:{x:{stacked:true}, y:{stacked:true}}
+      }
+    });
+  }
 }
 
-renderData();
+// --------------------
+// Автоматичне оновлення кожні 5 хвилин
+// --------------------
+updateData(); // стартове завантаження
+setInterval(updateData, 5*60*1000);
 </script>
 
 </body>
