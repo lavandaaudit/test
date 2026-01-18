@@ -1,215 +1,126 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="referrer" content="no-referrer">
-    <meta name="robots" content="noindex,nofollow">
-    <title>Ibonarium Cosmo Dynamics LAB LIVE</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow">
+<title>IBONARIUM · LIVE LIFE</title>
 
-    <!-- GOOGLE FONTS: Cinzel -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;color:#d8f3ff;font-family:Inter,system-ui,monospace;overflow:hidden}
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html, body {
-            width: 100%;
-            height: 100%;
-            background: #000;
-            overflow: hidden;
-            color: #cfefff;
-            font-family: 'Cinzel', serif;
-        }
+/* STARFIELD */
+#stars{position:fixed;inset:0;z-index:0}
 
-        /* STARFIELD */
-        canvas {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-        }
+/* LAYOUT */
+header{position:relative;z-index:2;padding:14px 18px;border-bottom:1px solid #0b2430}
+header h1{font-size:18px;letter-spacing:.18em;font-weight:400}
+header span{font-size:11px;opacity:.6}
 
-        /* CONTENT */
-        .container {
-            position: relative;
-            z-index: 1;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 30px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+main{position:relative;z-index:2;height:calc(100% - 56px);overflow-y:auto;padding:16px}
 
-        .main-title {
-            font-size: 48px;
-            font-weight: 700;
-            text-align: center;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            cursor: pointer;
-            text-shadow: 0 0 20px #ffcc00;
-            color: #ffcc00;
-            transition: all 0.3s ease;
-        }
-        .main-title:hover {
-            text-shadow: 0 0 40px #ffcc00;
-            transform: scale(1.05);
-        }
+.streams{display:flex;flex-direction:column;gap:14px;max-width:860px;margin:0 auto}
 
-        /* Два ряди — адаптивно */
-        .row {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-        }
+.stream{border:1px solid #0b2430;border-radius:14px;overflow:hidden;background:rgba(0,10,20,.65);backdrop-filter:blur(4px)}
+.stream h2{font-size:12px;letter-spacing:.14em;padding:8px 12px;background:#020b12;border-bottom:1px solid #0b2430;font-weight:400}
+.stream iframe{width:100%;height:260px;border:0;background:#000}
 
-        .block {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            overflow: hidden;
-            border-radius: 16px;
-            box-shadow: 0 0 25px rgba(255, 204, 0, 0.6);
-        }
-
-        .block img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        /* Червоний відтінок для LASCO C2 */
-        .red-gif img {
-            filter: hue-rotate(0deg) saturate(1.6) brightness(1.1);
-        }
-
-        /* Синій відтінок для LASCO C3 */
-        .blue-gif img {
-            filter: hue-rotate(200deg) saturate(1.6) brightness(1.1);
-        }
-
-        /* Золотиста рамка для SDO фото */
-        .sdo-photo {
-            border: 3px solid #ffcc00;
-        }
-
-        .note {
-            text-align: center;
-            font-size: 14px;
-            opacity: 0.8;
-            letter-spacing: 0.05em;
-            margin-top: 20px;
-        }
-
-        /* Адаптивність */
-        @media (max-width: 1024px) {
-            .row { grid-template-columns: repeat(2, 1fr); }
-            .main-title { font-size: 38px; }
-        }
-        @media (max-width: 768px) {
-            .row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-            .main-title { font-size: 32px; }
-            .container { padding: 20px; }
-        }
-        @media (max-width: 480px) {
-            .row { grid-template-columns: 1fr; }
-            .main-title { font-size: 28px; }
-            .note { font-size: 12px; }
-        }
-    </style>
+footer{position:relative;z-index:2;padding:10px 16px;font-size:11px;opacity:.5;text-align:center;border-top:1px solid #0b2430}
+@media(max-width:720px){
+header h1{font-size:14px}
+.stream iframe{height:200px}
+}
+</style>
 </head>
 <body>
-    <canvas id="stars"></canvas>
 
-    <div class="container">
-        <!-- Клікабельний заголовок → Телеграм -->
-        <div class="main-title" onclick="window.open('https://t.me/ibonariumcosmodynamicslablive', '_blank')">
-            Ibonarium Cosmo Dynamics LAB LIVE
-        </div>
+<canvas id="stars"></canvas>
 
-        <!-- Перший ряд: LASCO C2 (червоний) + 3 фото SDO -->
-        <div class="row">
-            <div class="block red-gif">
-                <img src="https://soho.nascom.nasa.gov/data/LATEST/current_c2.gif" alt="LASCO C2 animation" loading="lazy">
-            </div>
-            <div class="block sdo-photo">
-                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0171.jpg" alt="AIA 171 Å" loading="lazy">
-            </div>
-            <div class="block sdo-photo">
-                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0193.jpg" alt="AIA 193 Å" loading="lazy">
-            </div>
-            <div class="block sdo-photo">
-                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0304.jpg" alt="AIA 304 Å" loading="lazy">
-            </div>
-        </div>
+<header>
+  <h1>IBONARIUM <span>· LIVE LIFE · 24/7</span></h1>
+</header>
 
-        <!-- Другий ряд: LASCO C3 (синій) + 3 інші фото SDO -->
-        <div class="row">
-            <div class="block blue-gif">
-                <img src="https://soho.nascom.nasa.gov/data/LATEST/current_c3.gif" alt="LASCO C3 animation" loading="lazy">
-            </div>
-            <div class="block sdo-photo">
-                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0211.jpg" alt="AIA 211 Å" loading="lazy">
-            </div>
-            <div class="block sdo-photo">
-                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0131.jpg" alt="AIA 131 Å" loading="lazy">
-            </div>
-            <div class="block sdo-photo">
-                <img src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0094.jpg" alt="AIA 094 Å" loading="lazy">
-            </div>
-        </div>
+<main>
+<section class="streams" data-streams>
 
-        <div class="note">
-            2026•Ibonarium Cosmo Dynamics Lab LIVE — Center for Space & Planetary Monitoring
-        </div>
-    </div>
+  <div class="stream">
+    <h2>🐦 BIRDS · FOREST FEEDER</h2>
+    <iframe src="https://www.youtube-nocookie.com/embed/RxLoZ-D4_dY?controls=1&modestbranding=1&rel=0"></iframe>
+  </div>
 
-    <script>
-        // ===== OFF-GRID STARFIELD =====
-        const canvas = document.getElementById("stars");
-        const ctx = canvas.getContext("2d");
-        let W, H;
-        let stars = [];
+  <div class="stream">
+    <h2>🐾 WILDLIFE · FOREST CAM</h2>
+    <iframe src="https://www.youtube-nocookie.com/embed/F0GOOP82094?controls=1&modestbranding=1&rel=0"></iframe>
+  </div>
 
-        function resize() {
-            W = canvas.width = window.innerWidth;
-            H = canvas.height = window.innerHeight;
-            stars = Array.from({ length: 180 }, () => ({
-                x: Math.random() * W,
-                y: Math.random() * H,
-                z: Math.random() * W
-            }));
-        }
+  <div class="stream">
+    <h2>🌊 OCEAN · UNDERWATER</h2>
+    <iframe src="https://www.youtube-nocookie.com/embed/21X5lGlDOfg?controls=1&modestbranding=1&rel=0"></iframe>
+  </div>
 
-        resize();
-        window.addEventListener("resize", resize);
+  <div class="stream">
+    <h2>🏙️ CITY · LIVE VIEW</h2>
+    <iframe src="https://www.youtube-nocookie.com/embed/xRPjKQtRXR8?controls=1&modestbranding=1&rel=0"></iframe>
+  </div>
 
-        function render() {
-            ctx.fillStyle = "#000";
-            ctx.fillRect(0, 0, W, H);
+  <div class="stream">
+    <h2>🏭 INDUSTRIAL · INFRASTRUCTURE</h2>
+    <iframe src="https://www.youtube-nocookie.com/embed/rtR9Wc3v7pU?controls=1&modestbranding=1&rel=0"></iframe>
+  </div>
 
-            ctx.fillStyle = "#4dd2ff";
-            for (let s of stars) {
-                s.z -= 0.25; // Повільний політ зірок
-                if (s.z <= 0) s.z = W;
+</section>
+</main>
 
-                const k = 128 / s.z;
-                const x = (s.x - W / 2) * k + W / 2;
-                const y = (s.y - H / 2) * k + H / 2;
+<footer>
+IBONARIUM · автономні спостереження · без переходу на YouTube
+</footer>
 
-                if (x > 0 && x < W && y > 0 && y < H) {
-                    const size = (1 - s.z / W) * 3;
-                    ctx.fillRect(x, y, size, size);
-                }
-            }
-            requestAnimationFrame(render);
-        }
-        render();
-    </script>
+<script>
+const streams=[
+  {id:'birds',urls:['https://www.youtube-nocookie.com/embed/RxLoZ-D4_dY']},
+  {id:'wild',urls:['https://www.youtube-nocookie.com/embed/F0GOOP82094']},
+  {id:'ocean',urls:['https://www.youtube-nocookie.com/embed/21X5lGlDOfg']},
+  {id:'city',urls:['https://www.youtube-nocookie.com/embed/xRPjKQtRXR8']},
+  {id:'infra',urls:['https://www.youtube-nocookie.com/embed/rtR9Wc3v7pU']}
+];
+
+function attachFallback(){
+  document.querySelectorAll('.stream iframe').forEach((iframe,i)=>{
+    iframe.onerror=()=>{
+      iframe.src=streams[i].urls[0]+'?autoplay=0&mute=1';
+    }
+  })
+}
+window.addEventListener('load',attachFallback);
+
+const canvas=document.getElementById('stars');
+const ctx=canvas.getContext('2d');
+let w,h,stars=[];
+
+function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight}
+window.addEventListener('resize',resize);resize();
+
+for(let i=0;i<160;i++){
+  stars.push({x:Math.random()*w,y:Math.random()*h,z:Math.random()*0.5+0.2});
+}
+
+function draw(){
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#fff';
+  for(const s of stars){
+    ctx.globalAlpha=s.z;
+    ctx.fillRect(s.x,s.y,1.2,1.2);
+    s.y+=s.z*0.3;
+    if(s.y>h){s.y=0;s.x=Math.random()*w}
+  }
+  ctx.globalAlpha=1;
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+
 </body>
 </html>
