@@ -2,61 +2,103 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
+<title>IBONARIUM · LIVE LIFE · Africa</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer">
-<title>IBONARIUM · LIVE LIFE</title>
+<meta name="robots" content="noindex,nofollow">
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#000;color:#d8f3ff;font-family:Inter,system-ui,monospace}
-#stars{position:fixed;inset:0;z-index:0}
-header{position:relative;z-index:2;padding:14px 18px;border-bottom:1px solid #0b2430}
-header h1{font-size:16px;letter-spacing:.18em;font-weight:400}
-header span{font-size:11px;opacity:.6}
-main{position:relative;z-index:2;padding:14px;max-width:900px;margin:0 auto}
-.stream{margin-bottom:18px;border:1px solid #0b2430;border-radius:14px;overflow:hidden;background:rgba(0,10,20,.65)}
-.stream h2{font-size:12px;padding:8px 12px;border-bottom:1px solid #0b2430;letter-spacing:.12em;font-weight:400}
-video{width:100%;height:260px;background:#000}
-@media(max-width:720px){video{height:200px}header h1{font-size:14px}}
-footer{position:relative;z-index:2;padding:10px;text-align:center;font-size:11px;opacity:.5;border-top:1px solid #0b2430}
+
+html,body{
+  width:100%;
+  height:100%;
+  background:#000;
+  color:#cfefff;
+  font-family: system-ui, monospace;
+  overflow:hidden;
+}
+
+/* ⭐ зірки */
+#stars{
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+    radial-gradient(1px 1px at 80% 70%, #fff, transparent),
+    radial-gradient(1px 1px at 40% 80%, #aaa, transparent),
+    radial-gradient(1px 1px at 70% 20%, #aaa, transparent);
+  background-size:400px 400px;
+  animation: drift 120s linear infinite;
+  opacity:.25;
+  z-index:0;
+}
+
+@keyframes drift{
+  from{background-position:0 0}
+  to{background-position:400px 400px}
+}
+
+main{
+  position:relative;
+  z-index:1;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:12px;
+  gap:12px;
+}
+
+h1{
+  font-size:14px;
+  letter-spacing:2px;
+  opacity:.8;
+}
+
+h2{
+  font-size:12px;
+  opacity:.6;
+}
+
+video{
+  width:100%;
+  max-width:960px;
+  aspect-ratio:16/9;
+  background:#000;
+  border:1px solid #222;
+}
+
+footer{
+  font-size:10px;
+  opacity:.4;
+}
 </style>
 </head>
+
 <body>
-<canvas id="stars"></canvas>
-<header><h1>IBONARIUM <span>· LIVE LIFE · verified HLS</span></h1></header>
+
+<div id="stars"></div>
+
 <main>
+  <h1>IBONARIUM · LIVE LIFE</h1>
+  <h2>Africa · Waterhole · single camera</h2>
 
-<div class="stream">
-<h2>🌊 OCEAN · PACIFIC HARBOR</h2>
-<video autoplay muted loop playsinline controls
-src="https://playertest.longtailvideo.com/adaptive/oceans_aes/oceans_aes.m3u8"></video>
-</div>
+  <video
+    id="live"
+    controls
+    autoplay
+    muted
+    playsinline>
+    <!-- 🔴 СЮДИ ТИ ВСТАВИШ РЕАЛЬНИЙ HLS -->
+    <source src="PUT_YOUR_AFRICA_WATERHOLE.m3u8" type="application/x-mpegURL">
+  </video>
 
-<div class="stream">
-<h2>🏙️ CITY · URBAN TRAFFIC</h2>
-<video autoplay muted loop playsinline controls
-src="https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8"></video>
-</div>
-
-<div class="stream">
-<h2>🌧️ WEATHER · RADAR FEED</h2>
-<video autoplay muted loop playsinline controls
-src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"></video>
-</div>
-
-<div class="stream">
-<h2>🏭 INFRASTRUCTURE · PORT CAMERA</h2>
-<video autoplay muted loop playsinline controls
-src="https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8"></video>
-</div>
-
+  <footer>
+    live · no redirect · no platform
+  </footer>
 </main>
-<footer>IBONARIUM · direct video streams · no embeds</footer>
-<script>
-const c=document.getElementById('stars'),x=c.getContext('2d');let w,h,s=[];
-function r(){w=c.width=innerWidth;h=c.height=innerHeight}
-addEventListener('resize',r);r();
-for(let i=0;i<140;i++)s.push({x:Math.random()*w,y:Math.random()*h,v:Math.random()*0.4+0.1});
-(function a(){x.clearRect(0,0,w,h);x.fillStyle='#fff';s.forEach(o=>{x.globalAlpha=o.v;x.fillRect(o.x,o.y,1,1);o.y+=o.v*0.3;if(o.y>h){o.y=0;o.x=Math.random()*w}});requestAnimationFrame(a)})();
-</script>
+
 </body>
 </html>
