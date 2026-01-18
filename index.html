@@ -2,103 +2,19 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>IBONARIUM · LIVE LIFE · Africa</title>
+<title>IBONARIUM · LIVE AFRICA WILDLIFE</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="referrer" content="no-referrer">
-<meta name="robots" content="noindex,nofollow">
-
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-
-html,body{
-  width:100%;
-  height:100%;
-  background:#000;
-  color:#cfefff;
-  font-family: system-ui, monospace;
-  overflow:hidden;
-}
-
-/* ⭐ зірки */
-#stars{
-  position:fixed;
-  inset:0;
-  background:
-    radial-gradient(1px 1px at 20% 30%, #fff, transparent),
-    radial-gradient(1px 1px at 80% 70%, #fff, transparent),
-    radial-gradient(1px 1px at 40% 80%, #aaa, transparent),
-    radial-gradient(1px 1px at 70% 20%, #aaa, transparent);
-  background-size:400px 400px;
-  animation: drift 120s linear infinite;
-  opacity:.25;
-  z-index:0;
-}
-
-@keyframes drift{
-  from{background-position:0 0}
-  to{background-position:400px 400px}
-}
-
-main{
-  position:relative;
-  z-index:1;
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:12px;
-  gap:12px;
-}
-
-h1{
-  font-size:14px;
-  letter-spacing:2px;
-  opacity:.8;
-}
-
-h2{
-  font-size:12px;
-  opacity:.6;
-}
-
-video{
-  width:100%;
-  max-width:960px;
-  aspect-ratio:16/9;
-  background:#000;
-  border:1px solid #222;
-}
-
-footer{
-  font-size:10px;
-  opacity:.4;
-}
+  html, body { margin:0; padding:0; width:100%; height:100%; background:#000; color:#fff; font-family:system-ui,monospace; }
+  iframe { width:100%; height:100vh; border:none; }
 </style>
 </head>
-
 <body>
-
-<div id="stars"></div>
-
-<main>
-  <h1>IBONARIUM · LIVE LIFE</h1>
-  <h2>Africa · Waterhole · single camera</h2>
-
-  <video
-    id="live"
-    controls
-    autoplay
-    muted
-    playsinline>
-    <!-- 🔴 СЮДИ ТИ ВСТАВИШ РЕАЛЬНИЙ HLS -->
-    <source src="PUT_YOUR_AFRICA_WATERHOLE.m3u8" type="application/x-mpegURL">
-  </video>
-
-  <footer>
-    live · no redirect · no platform
-  </footer>
-</main>
-
+  <iframe
+    src="https://geostream360.live/live-streams/kruger-shalati-bridge-view"
+    allowfullscreen
+    loading="lazy"
+    referrerpolicy="no-referrer"
+    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
 </body>
 </html>
