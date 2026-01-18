@@ -2,19 +2,61 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>IBONARIUM · LIVE AFRICA WILDLIFE</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IBONARIUM · Africa Wildlife Live</title>
 <style>
-  html, body { margin:0; padding:0; width:100%; height:100%; background:#000; color:#fff; font-family:system-ui,monospace; }
-  iframe { width:100%; height:100vh; border:none; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    font-family: system-ui, monospace;
+    color: #fff;
+  }
+  header {
+    position: relative;
+    z-index: 2;
+    padding: 12px;
+    text-align: center;
+  }
+  header h1 { font-size: 16px; letter-spacing: 2px; opacity: .8; }
+  .video-container {
+    position: relative;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding-bottom: 56.25%; /* 16:9 ratio */
+    height: 0;
+  }
+  .video-container iframe {
+    position: absolute;
+    top:0; left:0;
+    width:100%; height:100%;
+    border:0;
+  }
+  footer { text-align:center; font-size:10px; opacity:.4; margin-top:8px; }
 </style>
 </head>
 <body>
-  <iframe
-    src="https://geostream360.live/live-streams/kruger-shalati-bridge-view"
+
+<header>
+  <h1>IBONARIUM · LIVE AFRICA WILDLIFE</h1>
+</header>
+
+<div class="video-container">
+  <iframe 
+    id="youtube-live"
+    src="https://www.youtube-nocookie.com/embed/PsJplltf9n8?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&playsinline=1" 
+    allow="autoplay; encrypted-media; picture-in-picture" 
     allowfullscreen
-    loading="lazy"
-    referrerpolicy="no-referrer"
-    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+    referrerpolicy="no-referrer">
+  </iframe>
+</div>
+
+<footer>
+  24/7 Africa Wildlife · IBONARIUM
+</footer>
+
 </body>
 </html>
