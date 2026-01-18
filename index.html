@@ -2,125 +2,78 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer">
-<meta name="robots" content="noindex,nofollow">
 <title>IBONARIUM · LIVE LIFE</title>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#000;color:#d8f3ff;font-family:Inter,system-ui,monospace;overflow:hidden}
+html,body{width:100%;height:100%;background:#000;color:#d8f3ff;font-family:Inter,system-ui,monospace}
 
-/* STARFIELD */
 #stars{position:fixed;inset:0;z-index:0}
 
-/* LAYOUT */
 header{position:relative;z-index:2;padding:14px 18px;border-bottom:1px solid #0b2430}
-header h1{font-size:18px;letter-spacing:.18em;font-weight:400}
+header h1{font-size:16px;letter-spacing:.18em;font-weight:400}
 header span{font-size:11px;opacity:.6}
 
-main{position:relative;z-index:2;height:calc(100% - 56px);overflow-y:auto;padding:16px}
+main{position:relative;z-index:2;padding:14px;max-width:900px;margin:0 auto}
+.stream{margin-bottom:16px;border:1px solid #0b2430;border-radius:14px;overflow:hidden;background:rgba(0,10,20,.65)}
+.stream h2{font-size:12px;padding:8px 12px;border-bottom:1px solid #0b2430;letter-spacing:.12em;font-weight:400}
+.stream iframe, .stream video{width:100%;height:260px;background:#000;border:0}
 
-.streams{display:flex;flex-direction:column;gap:14px;max-width:860px;margin:0 auto}
-
-.stream{border:1px solid #0b2430;border-radius:14px;overflow:hidden;background:rgba(0,10,20,.65);backdrop-filter:blur(4px)}
-.stream h2{font-size:12px;letter-spacing:.14em;padding:8px 12px;background:#020b12;border-bottom:1px solid #0b2430;font-weight:400}
-.stream iframe{width:100%;height:260px;border:0;background:#000}
-
-footer{position:relative;z-index:2;padding:10px 16px;font-size:11px;opacity:.5;text-align:center;border-top:1px solid #0b2430}
 @media(max-width:720px){
+.stream iframe,.stream video{height:200px}
 header h1{font-size:14px}
-.stream iframe{height:200px}
 }
+
+footer{position:relative;z-index:2;padding:10px;text-align:center;font-size:11px;opacity:.5;border-top:1px solid #0b2430}
 </style>
 </head>
 <body>
-
 <canvas id="stars"></canvas>
 
 <header>
-  <h1>IBONARIUM <span>· LIVE LIFE · 24/7</span></h1>
+<h1>IBONARIUM <span>· LIVE LIFE · autonomous streams</span></h1>
 </header>
 
 <main>
-<section class="streams" data-streams>
 
-  <div class="stream">
-    <h2>🐦 BIRDS · FOREST FEEDER</h2>
-    <iframe allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer" loading="lazy" src="https://www.youtube-nocookie.com/embed/RxLoZ-D4_dY?controls=1&modestbranding=1&rel=0&playsinline=1"></iframe>
-  </div>
+<div class="stream">
+<h2>🐦 BIRDS · EXPLORE</h2>
+<iframe src="https://explore.org/livecams/bird-cams/bird-feeder-cam" loading="lazy"></iframe>
+</div>
 
-  <div class="stream">
-    <h2>🐾 WILDLIFE · FOREST CAM</h2>
-    <iframe allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer" loading="lazy" src="https://www.youtube-nocookie.com/embed/F0GOOP82094?controls=1&modestbranding=1&rel=0&playsinline=1"></iframe>
-  </div>
+<div class="stream">
+<h2>🐾 ANIMALS · AFRICAM</h2>
+<iframe src="https://www.africam.com/wildlife/" loading="lazy"></iframe>
+</div>
 
-  <div class="stream">
-    <h2>🌊 OCEAN · UNDERWATER</h2>
-    <iframe allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer" loading="lazy" src="https://www.youtube-nocookie.com/embed/21X5lGlDOfg?controls=1&modestbranding=1&rel=0&playsinline=1"></iframe>
-  </div>
+<div class="stream">
+<h2>🌊 OCEAN · MONTEREY BAY</h2>
+<iframe src="https://www.montereybayaquarium.org/animals/live-cams/sea-otter-cam" loading="lazy"></iframe>
+</div>
 
-  <div class="stream">
-    <h2>🏙️ CITY · LIVE VIEW</h2>
-    <iframe allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer" loading="lazy" src="https://www.youtube-nocookie.com/embed/xRPjKQtRXR8?controls=1&modestbranding=1&rel=0&playsinline=1"></iframe>
-  </div>
+<div class="stream">
+<h2>🏙️ CITY · EARTHCAM</h2>
+<iframe src="https://www.earthcam.com/usa/newyork/timessquare/?cam=tsrobo1" loading="lazy"></iframe>
+</div>
 
-  <div class="stream">
-    <h2>🏭 INDUSTRIAL · INFRASTRUCTURE</h2>
-    <iframe allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer" loading="lazy" src="https://www.youtube-nocookie.com/embed/rtR9Wc3v7pU?controls=1&modestbranding=1&rel=0&playsinline=1"></iframe>
-  </div>
+<div class="stream">
+<h2>🏭 INFRASTRUCTURE · HARBOUR CAM</h2>
+<iframe src="https://www.portvancouver.com/live-webcams/" loading="lazy"></iframe>
+</div>
 
-</section>
 </main>
 
 <footer>
-IBONARIUM · автономні спостереження · без переходу на YouTube
+IBONARIUM · Variant B · non‑YouTube live sources
 </footer>
 
 <script>
-const streams=[
-  {id:'birds',urls:['https://www.youtube-nocookie.com/embed/RxLoZ-D4_dY']},
-  {id:'wild',urls:['https://www.youtube-nocookie.com/embed/F0GOOP82094']},
-  {id:'ocean',urls:['https://www.youtube-nocookie.com/embed/21X5lGlDOfg']},
-  {id:'city',urls:['https://www.youtube-nocookie.com/embed/xRPjKQtRXR8']},
-  {id:'infra',urls:['https://www.youtube-nocookie.com/embed/rtR9Wc3v7pU']}
-];
-
-function attachFallback(){
-  document.querySelectorAll('.stream iframe').forEach((iframe,i)=>{
-    iframe.onerror=()=>{
-      iframe.src=streams[i].urls[0]+'?autoplay=0&mute=1';
-    }
-  })
-}
-window.addEventListener('load',attachFallback);
-
-const canvas=document.getElementById('stars');
-const ctx=canvas.getContext('2d');
-let w,h,stars=[];
-
-function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight}
-window.addEventListener('resize',resize);resize();
-
-for(let i=0;i<160;i++){
-  stars.push({x:Math.random()*w,y:Math.random()*h,z:Math.random()*0.5+0.2});
-}
-
-function draw(){
-  ctx.clearRect(0,0,w,h);
-  ctx.fillStyle='#fff';
-  for(const s of stars){
-    ctx.globalAlpha=s.z;
-    ctx.fillRect(s.x,s.y,1.2,1.2);
-    s.y+=s.z*0.3;
-    if(s.y>h){s.y=0;s.x=Math.random()*w}
-  }
-  ctx.globalAlpha=1;
-  requestAnimationFrame(draw);
-}
-
-draw();
+const c=document.getElementById('stars'),x=c.getContext('2d');let w,h,s=[];
+function r(){w=c.width=innerWidth;h=c.height=innerHeight}
+addEventListener('resize',r);r();
+for(let i=0;i<140;i++)s.push({x:Math.random()*w,y:Math.random()*h,v:Math.random()*0.4+0.1});
+(function a(){x.clearRect(0,0,w,h);x.fillStyle='#fff';s.forEach(o=>{x.globalAlpha=o.v;x.fillRect(o.x,o.y,1,1);o.y+=o.v*0.3;if(o.y>h){o.y=0;o.x=Math.random()*w}});requestAnimationFrame(a)})();
 </script>
-
 </body>
 </html>
