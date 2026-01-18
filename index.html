@@ -2,59 +2,48 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>IBONARIUM · Africa Wildlife Live</title>
+<title>IBONARIUM · LIVE LIFE</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-html,body {
-  margin:0;
-  padding:0;
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
   width:100%;
   height:100%;
   background:#000;
+  color:#cfefff;
+  font-family: system-ui, monospace;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+h1 { font-size:20px; letter-spacing:.1em; opacity:.8; margin-bottom:20px; }
+a.button {
+  display:inline-block;
+  padding:12px 24px;
+  font-size:16px;
   color:#fff;
-  font-family:system-ui,monospace;
+  background:#1a73e8;
+  border-radius:8px;
+  text-decoration:none;
+  transition: background 0.3s;
 }
-header {
-  text-align:center;
-  padding:12px;
-  font-size:18px;
-  opacity:.8;
-}
-.video-container {
-  position:relative;
-  width:100%;
-  height:calc(100vh - 48px);
-}
-.video-container iframe {
-  position:absolute;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  border:0;
-}
-footer {
-  text-align:center;
-  font-size:10px;
-  opacity:.4;
-  padding:8px;
-}
+a.button:hover { background:#155ab6; }
+footer { font-size:10px; opacity:.4; margin-top:24px; }
 </style>
 </head>
 <body>
 
-<header>IBONARIUM · LIVE ANIMALS</header>
+<h1>IBONARIUM · LIVE AFRICA WILDLIFE</h1>
 
-<div class="video-container">
-  <iframe
-    src="https://www.youtube-nocookie.com/embed/vr4o_AsrU1k?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&playsinline=1"
-    allow="autoplay; encrypted-media; picture-in-picture"
-    allowfullscreen
-    referrerpolicy="no-referrer">
-  </iframe>
-</div>
+<a class="button" href="https://www.youtube.com/watch?v=vr4o_AsrU1k" target="_blank" rel="noopener noreferrer">
+  Переглянути трансляцію на YouTube
+</a>
 
-<footer>Live · Africa / Animals · 24/7</footer>
+<footer>24/7 live animals · IBONARIUM</footer>
 
 </body>
 </html>
