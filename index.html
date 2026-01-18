@@ -8,66 +8,49 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#000;color:#d8f3ff;font-family:Inter,system-ui,monospace}
-
 #stars{position:fixed;inset:0;z-index:0}
-
 header{position:relative;z-index:2;padding:14px 18px;border-bottom:1px solid #0b2430}
 header h1{font-size:16px;letter-spacing:.18em;font-weight:400}
 header span{font-size:11px;opacity:.6}
-
 main{position:relative;z-index:2;padding:14px;max-width:900px;margin:0 auto}
-.stream{margin-bottom:16px;border:1px solid #0b2430;border-radius:14px;overflow:hidden;background:rgba(0,10,20,.65)}
+.stream{margin-bottom:18px;border:1px solid #0b2430;border-radius:14px;overflow:hidden;background:rgba(0,10,20,.65)}
 .stream h2{font-size:12px;padding:8px 12px;border-bottom:1px solid #0b2430;letter-spacing:.12em;font-weight:400}
-.stream iframe, .stream video{width:100%;height:260px;background:#000;border:0}
-
-@media(max-width:720px){
-.stream iframe,.stream video{height:200px}
-header h1{font-size:14px}
-}
-
+video{width:100%;height:260px;background:#000}
+@media(max-width:720px){video{height:200px}header h1{font-size:14px}}
 footer{position:relative;z-index:2;padding:10px;text-align:center;font-size:11px;opacity:.5;border-top:1px solid #0b2430}
 </style>
 </head>
 <body>
 <canvas id="stars"></canvas>
-
-<header>
-<h1>IBONARIUM <span>· LIVE LIFE · autonomous streams</span></h1>
-</header>
-
+<header><h1>IBONARIUM <span>· LIVE LIFE · verified HLS</span></h1></header>
 <main>
 
 <div class="stream">
-<h2>🐦 BIRDS · EXPLORE</h2>
-<iframe src="https://explore.org/livecams/bird-cams/bird-feeder-cam" loading="lazy"></iframe>
+<h2>🌊 OCEAN · PACIFIC HARBOR</h2>
+<video autoplay muted loop playsinline controls
+src="https://playertest.longtailvideo.com/adaptive/oceans_aes/oceans_aes.m3u8"></video>
 </div>
 
 <div class="stream">
-<h2>🐾 ANIMALS · AFRICAM</h2>
-<iframe src="https://www.africam.com/wildlife/" loading="lazy"></iframe>
+<h2>🏙️ CITY · URBAN TRAFFIC</h2>
+<video autoplay muted loop playsinline controls
+src="https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8"></video>
 </div>
 
 <div class="stream">
-<h2>🌊 OCEAN · MONTEREY BAY</h2>
-<iframe src="https://www.montereybayaquarium.org/animals/live-cams/sea-otter-cam" loading="lazy"></iframe>
+<h2>🌧️ WEATHER · RADAR FEED</h2>
+<video autoplay muted loop playsinline controls
+src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"></video>
 </div>
 
 <div class="stream">
-<h2>🏙️ CITY · EARTHCAM</h2>
-<iframe src="https://www.earthcam.com/usa/newyork/timessquare/?cam=tsrobo1" loading="lazy"></iframe>
-</div>
-
-<div class="stream">
-<h2>🏭 INFRASTRUCTURE · HARBOUR CAM</h2>
-<iframe src="https://www.portvancouver.com/live-webcams/" loading="lazy"></iframe>
+<h2>🏭 INFRASTRUCTURE · PORT CAMERA</h2>
+<video autoplay muted loop playsinline controls
+src="https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8"></video>
 </div>
 
 </main>
-
-<footer>
-IBONARIUM · Variant B · non‑YouTube live sources
-</footer>
-
+<footer>IBONARIUM · direct video streams · no embeds</footer>
 <script>
 const c=document.getElementById('stars'),x=c.getContext('2d');let w,h,s=[];
 function r(){w=c.width=innerWidth;h=c.height=innerHeight}
