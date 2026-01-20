@@ -7,13 +7,9 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <!-- CSP для безпечного iframe на GitHub Pages -->
-    <meta http-equiv="Content-Security-Policy" content="frame-src https://realtime.obs-nancay.fr https://obs-nancay.fr;">
+    <meta http-equiv="Content-Security-Policy" content="frame-src https://realtime.obs-nancay.fr https://obs-nancay.fr https://services.swpc.noaa.gov;">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body {
             width: 100%;
             height: 100%;
@@ -22,120 +18,25 @@
             font-family: Inter, system-ui, monospace;
             overflow: auto;
         }
-        .wrapper {
-            width: 100%;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 8px 0;
-        }
-        .panel {
-            width: 96%;
-            max-width: 1400px;
-            display: flex;
-            flex-direction: row;
-            gap: 18px;
-        }
+        .wrapper { width: 100%; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 8px 0; }
+        .panel { width: 96%; max-width: 1400px; display: flex; flex-direction: row; gap: 18px; }
         /* LEFT */
-        .left {
-            width: 40%;
-            border: 1px solid #0ff3;
-            padding: 14px;
-            overflow-y: auto;
-            min-height: 500px;
-        }
-        .left h2 {
-            font-size: 19.8px;
-            margin-bottom: 12.6px;
-            text-align: center;
-            color: #7fffd4;
-        }
-        .indicator {
-            margin-bottom: 8px;
-            font-size: 14.4px;
-            line-height: 1.3;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .indicator .label {
-            opacity: 0.9;
-        }
-        .indicator .value {
-            font-weight: bold;
-            min-width: 110px;
-            text-align: right;
-            padding: 3px 7px;
-            border-radius: 4px;
-            transition: background-color 0.5s;
-        }
+        .left { width: 40%; border: 1px solid #0ff3; padding: 14px; overflow-y: auto; min-height: 500px; }
+        .left h2 { font-size: 19.8px; margin-bottom: 12.6px; text-align: center; color: #7fffd4; }
+        .indicator { margin-bottom: 8px; font-size: 14.4px; line-height: 1.3; display: flex; justify-content: space-between; align-items: center; }
+        .indicator .label { opacity: 0.9; }
+        .indicator .value { font-weight: bold; min-width: 110px; text-align: right; padding: 3px 7px; border-radius: 4px; transition: background-color 0.5s; }
         /* RIGHT */
-        .right {
-            width: 60%;
-            border: 1px solid #0ff3;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .chart-container {
-            flex: 0.8;
-            min-height: 180px;
-        }
-        .magnetometer-container {
-            flex: 1.2;
-            min-height: 200px;
-        }
-        .spectrogram-container {
-            flex: 2;
-            min-height: 420px;
-            position: relative;
-        }
-        canvas, img {
-            width: 100% !important;
-            height: 100% !important;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            filter: contrast(115%) brightness(110%);
-            background: #000;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
+        .right { width: 60%; border: 1px solid #0ff3; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+        .chart-container { flex: 0.8; min-height: 180px; }
+        .magnetometer-container { flex: 1.2; min-height: 240px; position: relative; }
+        .spectrogram-container { flex: 2; min-height: 420px; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; filter: contrast(115%) brightness(110%); background: #000; position: absolute; top: 0; left: 0; }
 
         /* Адаптація для планшетів та мобільних */
-        @media (max-width: 1024px) {
-            .panel { flex-direction: column; }
-            .left, .right { width: 100%; }
-            .chart-container { min-height: 250px; }
-            .spectrogram-container { min-height: 500px; }
-        }
-
-        @media (max-width: 768px) {
-            .wrapper { padding: 6px; }
-            .panel { gap: 12px; }
-            .left { padding: 12px; }
-            .left h2 { font-size: 18px; }
-            .indicator { font-size: 13.5px; margin-bottom: 7px; }
-            .right { padding: 12px; }
-            .chart-container { min-height: 200px; }
-            .spectrogram-container { min-height: 450px; }
-            iframe { transform: scale(0.90); transform-origin: top left; }
-        }
-
-        @media (max-width: 480px) {
-            .left h2 { font-size: 16.2px; }
-            .indicator { font-size: 12.6px; flex-direction: column; align-items: flex-start; }
-            .indicator .value { margin-top: 4px; text-align: left; }
-            .left, .right { padding: 9px; }
-            .chart-container { min-height: 180px; }
-            .spectrogram-container { min-height: 400px; }
-            iframe { transform: scale(0.85); transform-origin: top left; }
-        }
+        @media (max-width: 1024px) { .panel { flex-direction: column; } .left, .right { width: 100%; } .chart-container { min-height: 250px; } .spectrogram-container { min-height: 500px; } }
+        @media (max-width: 768px) { .wrapper { padding: 6px; } .panel { gap: 12px; } .left { padding: 12px; } .left h2 { font-size: 18px; } .indicator { font-size: 13.5px; margin-bottom: 7px; } .right { padding: 12px; } .chart-container { min-height: 200px; } .spectrogram-container { min-height: 450px; } iframe { transform: scale(0.90); transform-origin: top left; } }
+        @media (max-width: 480px) { .left h2 { font-size: 16.2px; } .indicator { font-size: 12.6px; flex-direction: column; align-items: flex-start; } .indicator .value { margin-top: 4px; text-align: left; } .left, .right { padding: 9px; } .chart-container { min-height: 180px; } .spectrogram-container { min-height: 400px; } iframe { transform: scale(0.85); transform-origin: top left; } }
     </style>
 </head>
 <body>
@@ -167,23 +68,20 @@
         </div>
         <!-- RIGHT COLUMN -->
         <div class="right">
-            <!-- Upper chart -->
+            <!-- Верхній графік -->
             <div class="chart-container">
                 <canvas id="breathChart"></canvas>
             </div>
-            <!-- MAGNETOMETER -->
+            <!-- Магнітометр GOES -->
             <div class="magnetometer-container">
-                <img id="magnetometer" src="https://services.swpc.noaa.gov/images/goes/mag/goes-magnetometer.png" 
-                     alt="GOES Magnetometer" style="width:100%; height:100%; object-fit:contain;">
+                <iframe 
+                    src="https://services.swpc.noaa.gov/images/goes/mag/goes-magnetometer.png" 
+                    loading="lazy"
+                    sandbox="allow-scripts allow-same-origin allow-popups"
+                    referrerpolicy="no-referrer">
+                </iframe>
             </div>
-            <script>
-              // Автооновлення магнітометра кожні 5 хв
-              setInterval(() => {
-                const img = document.getElementById('magnetometer');
-                img.src = "https://services.swpc.noaa.gov/images/goes/mag/goes-magnetometer.png?ts=" + Date.now();
-              }, 300000);
-            </script>
-            <!-- Spectrogram Orfee -->
+            <!-- Орфей -->
             <div class="spectrogram-container">
                 <iframe
                     src="https://realtime.obs-nancay.fr/orfees/"
@@ -265,7 +163,6 @@ async function updateData() {
     document.getElementById("imf_by").textContent = m[2] || '—';
     document.getElementById("pressure").textContent = p[7] || '—';
     document.getElementById("kp").textContent = k[1] || '—';
-
     document.getElementById("dst").textContent = "NOAA Dst realtime";
     document.getElementById("ae").textContent = "Auroral activity active";
     document.getElementById("proton_flux").textContent = "SWPC GOES";
@@ -277,7 +174,6 @@ async function updateData() {
       kpVal >= 6 ? "G2" :
       kpVal >= 5 ? "G1" : "Quiet";
 
-    // Алерти для основних показників
     setAlert('sw_speed', parseFloat(p[2]) > 700 ? 'yellow' : parseFloat(p[2]) > 1000 ? 'red' : 'green');
     setAlert('imf_bz', bz > -5 ? 'green' : bz > -10 ? 'yellow' : 'red');
     setAlert('imf_bt', bt < 20 ? 'green' : bt < 30 ? 'yellow' : 'red');
@@ -285,7 +181,6 @@ async function updateData() {
     setAlert('kp', kpVal < 4 ? 'green' : kpVal < 6 ? 'yellow' : 'red');
     setAlert('storm', document.getElementById("storm").textContent === "Quiet" ? 'green' : document.getElementById("storm").textContent.includes("G1") || document.getElementById("storm").textContent.includes("G2") ? 'yellow' : 'red');
 
-    // Дані про спалахи
     const xray = await fetch("https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json").then(r => r.json());
     const latestXray = xray[xray.length - 1];
     const flux = latestXray.flux;
@@ -315,7 +210,6 @@ async function updateData() {
       document.getElementById("strongest_flare").textContent = "None";
     }
 
-    // Алерти для flare.activity
     const flareLevel = flareClass.startsWith('C') ? 'green' : flareClass.startsWith('M') ? 'yellow' : flareClass.startsWith('X') ? 'red' : 'green';
     setAlert('flare_class', flareLevel);
     setAlert('x_flares_count', xFlares.length === 0 ? 'green' : xFlares.length <= 2 ? 'yellow' : 'red');
