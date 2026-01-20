@@ -1,146 +1,340 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IBONARIUM · Wildlife Pulse Live</title>
-
-<!-- Leaflet для карти -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- Chart.js для графіків -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-body { margin:0; padding:0; font-family:system-ui, monospace; background:#000; color:#fff;}
-header { text-align:center; padding:12px; font-size:20px; opacity:0.8; }
-#map { width:100%; height:60vh; }
-.container { display:flex; flex-direction:column; gap:24px; padding:12px; align-items:center; }
-.chart-container { width:100%; max-width:800px; }
-footer { text-align:center; font-size:10px; opacity:0.4; padding:12px; }
-</style>
+    <meta charset="UTF-8">
+    <title>ibonarium.stability.human.lab.live</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- CSP для безпечного iframe на GitHub Pages -->
+    <meta http-equiv="Content-Security-Policy" content="frame-src https://realtime.obs-nancay.fr https://obs-nancay.fr https://services.swpc.noaa.gov;">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #cfefff;
+            font-family: Inter, system-ui, monospace;
+            overflow: auto;
+        }
+        .wrapper {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 8px 0;
+        }
+        .panel {
+            width: 96%;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: row;
+            gap: 18px;
+        }
+        /* LEFT */
+        .left {
+            width: 40%;
+            border: 1px solid #0ff3;
+            padding: 14px;
+            overflow-y: auto;
+            min-height: 500px;
+        }
+        .left h2 {
+            font-size: 19.8px;
+            margin-bottom: 12.6px;
+            text-align: center;
+            color: #7fffd4;
+        }
+        .indicator {
+            margin-bottom: 8px;
+            font-size: 14.4px;
+            line-height: 1.3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .indicator .label {
+            opacity: 0.9;
+        }
+        .indicator .value {
+            font-weight: bold;
+            min-width: 110px;
+            text-align: right;
+            padding: 3px 7px;
+            border-radius: 4px;
+            transition: background-color 0.5s;
+        }
+        /* RIGHT */
+        .right {
+            width: 60%;
+            border: 1px solid #0ff3;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .chart-container {
+            flex: 0.8;
+            min-height: 180px;
+        }
+        .magnetometer-container {
+            flex: 1.2;
+            min-height: 240px;
+            position: relative;
+        }
+        .spectrogram-container {
+            flex: 2;
+            min-height: 420px;
+            position: relative;
+        }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            filter: contrast(115%) brightness(110%);
+            background: #000;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        /* Адаптація для планшетів та мобільних */
+        @media (max-width: 1024px) {
+            .panel { flex-direction: column; }
+            .left, .right { width: 100%; }
+            .left { min-height: auto; }
+            .right { min-height: auto; }
+            .chart-container { min-height: 250px; }
+            .magnetometer-container { min-height: 300px; }
+            .spectrogram-container { min-height: 500px; }
+        }
+        @media (max-width: 768px) {
+            .wrapper { padding: 6px; }
+            .panel { gap: 12px; }
+            .left { padding: 12px; }
+            .left h2 { font-size: 18px; }
+            .indicator { font-size: 13.5px; margin-bottom: 7px; }
+            .right { padding: 12px; }
+            .chart-container { min-height: 200px; }
+            .magnetometer-container { min-height: 250px; }
+            .spectrogram-container { min-height: 450px; }
+            iframe { transform: scale(0.90); transform-origin: top left; }
+        }
+        @media (max-width: 480px) {
+            .left h2 { font-size: 16.2px; }
+            .indicator { font-size: 12.6px; flex-direction: column; align-items: flex-start; }
+            .indicator .value { margin-top: 4px; text-align: left; }
+            .left { padding: 9px; }
+            .right { padding: 9px; }
+            .chart-container { min-height: 180px; }
+            .magnetometer-container { min-height: 220px; }
+            .spectrogram-container { min-height: 400px; }
+            iframe { transform: scale(0.85); transform-origin: top left; }
+        }
+    </style>
 </head>
 <body>
+<div class="wrapper">
+    <div class="panel">
+        <!-- LEFT COLUMN -->
+        <div class="left">
+            <h2>ibonarium.solar.stability.lab.live</h2>
+            <div class="indicator"><span class="label">Solar Wind Speed (km/s):</span> <span id="sw_speed" class="value">—</span></div>
+            <div class="indicator"><span class="label">Solar Wind Density (/cc):</span> <span id="sw_density" class="value">—</span></div>
+            <div class="indicator"><span class="label">Solar Wind Temperature (K):</span> <span id="sw_temp" class="value">—</span></div>
+            <div class="indicator"><span class="label">IMF Bt – Total Magnetic Field (nT):</span> <span id="imf_bt" class="value">—</span></div>
+            <div class="indicator"><span class="label">IMF Bz (nT):</span> <span id="imf_bz" class="value">—</span></div>
+            <div class="indicator"><span class="label">IMF By (nT):</span> <span id="imf_by" class="value">—</span></div>
+            <div class="indicator"><span class="label">Solar Wind Dynamic Pressure (nPa):</span> <span id="pressure" class="value">—</span></div>
+            <div class="indicator"><span class="label">Proton Flux &gt;10 MeV:</span> <span id="proton_flux" class="value">—</span></div>
+            <div class="indicator"><span class="label">Electron Flux &gt;2 MeV:</span> <span id="electron_flux" class="value">—</span></div>
+            <div class="indicator"><span class="label">Kp Index:</span> <span id="kp" class="value">—</span></div>
+            <div class="indicator"><span class="label">Dst Index (nT):</span> <span id="dst" class="value">—</span></div>
+            <div class="indicator"><span class="label">AE Index (Auroral Electrojet):</span> <span id="ae" class="value">—</span></div>
+            <div class="indicator"><span class="label">Geomagnetic Storm Level (G1–G5):</span> <span id="storm" class="value">—</span></div>
 
-<header>IBONARIUM · Wildlife Pulse Live (iNaturalist + eBird)</header>
-
-<div id="map"></div>
-
-<div class="container">
-  <div class="chart-container">
-    <canvas id="activityChart"></canvas>
-  </div>
+            <h2 style="margin-top:24px; font-size:16.2px;">ibonarium.solar.flare.activity.lab.live</h2>
+            <div class="indicator"><span class="label">Latest GOES X-Ray Flux Class:</span> <span id="flare_class" class="value">—</span></div>
+            <div class="indicator"><span class="label">Recent X-class Flares (last 7 days):</span> <span id="x_flares_count" class="value">—</span></div>
+            <div class="indicator"><span class="label">Strongest Recent Flare:</span> <span id="strongest_flare" class="value">—</span></div>
+            <div class="indicator"><span class="label">F10.7 cm Radio Flux (sfu):</span> <span id="f107" class="value">—</span></div>
+            <div class="indicator"><span class="label">Sunspot Number (SIDC):</span> <span id="sunspot" class="value">—</span></div>
+        </div>
+        <!-- RIGHT COLUMN -->
+        <div class="right">
+            <!-- Верхній графік залишається без змін -->
+            <div class="chart-container">
+                <canvas id="breathChart"></canvas>
+            </div>
+            <!-- MAGNETOMETER -->
+            <div class="magnetometer-container">
+                <iframe
+                    src="https://services.swpc.noaa.gov/products/goes-magnetometer.json"
+                    loading="lazy"
+                    referrerpolicy="no-referrer"
+                    sandbox="allow-scripts allow-same-origin">
+                </iframe>
+            </div>
+            <!-- SPECTROGRAM / ORFEE -->
+            <div class="spectrogram-container">
+                <iframe
+                    src="https://realtime.obs-nancay.fr/orfees/"
+                    loading="lazy"
+                    referrerpolicy="no-referrer"
+                    sandbox="allow-scripts allow-same-origin">
+                </iframe>
+            </div>
+        </div>
+    </div>
 </div>
 
-<footer>IBONARIUM · Live Wildlife Observations</footer>
-
 <script>
-const EBIRD_KEY = "YOUR_EBIRD_API_KEY"; // встав свій ключ
-let map = L.map('map').setView([20,0], 2);
+const labels = [];
+const dataBt = [];
+const dataBz = [];
+const dataPressure = [];
+const dataKp = [];
+const ctx = document.getElementById('breathChart').getContext('2d');
+const breathChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [
+      { label: 'IMF Bt (nT)', data: dataBt, borderColor: '#0ff', backgroundColor: 'rgba(0,255,255,0.1)', borderWidth: 2, tension: 0.4 },
+      { label: 'IMF Bz (nT)', data: dataBz, borderColor: '#f0f', backgroundColor: 'rgba(255,0,255,0.1)', borderWidth: 2, tension: 0.4 },
+      { label: 'Dynamic Pressure (nPa)', data: dataPressure, borderColor: '#ff0', backgroundColor: 'rgba(255,255,0,0.1)', borderWidth: 2, tension: 0.4 },
+      { label: 'Kp Index', data: dataKp, borderColor: '#0f0', backgroundColor: 'rgba(0,255,0,0.1)', borderWidth: 2, tension: 0.4 }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: { x: { ticks: { color: '#9ff' }, grid: { color: '#033' } }, y: { ticks: { color: '#9ff' }, grid: { color: '#033' } } },
+    plugins: { legend: { labels: { color: '#cff' } } }
+  }
+});
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  attribution:'&copy; OpenStreetMap contributors'
-}).addTo(map);
-
-let markersLayer = L.layerGroup().addTo(map);
-let activityChart;
-
-// --------------------
-// Функція завантаження iNaturalist
-// --------------------
-async function fetchiNat() {
-  const url = "https://api.inaturalist.org/v1/observations?order=desc&order_by=created_at&per_page=50";
-  const response = await fetch(url);
-  const data = await response.json();
-  return data.results;
+function setAlert(elementId, level) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.className = 'value';
+  if (level === 'green') el.style.backgroundColor = 'rgba(0,255,0,0.2)';
+  else if (level === 'yellow') el.style.backgroundColor = 'rgba(255,255,0,0.2)';
+  else if (level === 'red') el.style.backgroundColor = 'rgba(255,0,0,0.3)';
+  else el.style.backgroundColor = 'transparent';
 }
 
-// --------------------
-// Функція завантаження eBird
-// --------------------
-async function fetcheBird() {
-  const lat = 48; // можна динамічно міняти
-  const lng = 24;
-  const url = `https://api.ebird.org/v2/data/obs/geo/recent?lat=${lat}&lng=${lng}&dist=500&back=7`;
-  const response = await fetch(url, {headers: {"X-eBirdApiToken": EBIRD_KEY}});
-  const data = await response.json();
-  return data;
-}
-
-// --------------------
-// Функція оновлення карти та графіку
-// --------------------
 async function updateData() {
-  markersLayer.clearLayers();
-  const iNatData = await fetchiNat();
-  const eBirdData = await fetcheBird();
-  let allPoints = [];
+  try {
+    const plasma = await fetch("https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json").then(r => r.json());
+    const mag = await fetch("https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json").then(r => r.json());
+    const kp = await fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json").then(r => r.json());
 
-  // iNaturalist
-  iNatData.forEach(obs => {
-    if(obs.geojson){
-      const lat = obs.geojson.coordinates[1];
-      const lon = obs.geojson.coordinates[0];
-      const species = obs.species_guess || obs.taxon.name;
-      L.circleMarker([lat, lon], {color:'lime', radius:5, fillOpacity:0.7})
-        .bindPopup(`<b>${species}</b><br>${new Date(obs.time_observed_at).toLocaleString()}`)
-        .addTo(markersLayer);
-      allPoints.push({time:new Date(obs.time_observed_at), source:'iNaturalist'});
+    const p = plasma[plasma.length - 1];
+    const m = mag[mag.length - 1];
+    const k = kp[kp.length - 1];
+
+    const time = new Date().toLocaleTimeString();
+
+    labels.push(time);
+    if (labels.length > 30) { labels.shift(); dataBt.shift(); dataBz.shift(); dataPressure.shift(); dataKp.shift(); }
+
+    const bt = parseFloat(m[6]) || 0;
+    const bz = parseFloat(m[3]) || 0;
+    const pressure = parseFloat(p[7]) || 0;
+    const kpVal = parseFloat(k[1]) || 0;
+
+    dataBt.push(bt);
+    dataBz.push(bz);
+    dataPressure.push(pressure);
+    dataKp.push(kpVal);
+
+    document.getElementById("sw_speed").textContent = p[2] || '—';
+    document.getElementById("sw_density").textContent = p[1] || '—';
+    document.getElementById("sw_temp").textContent = p[3] || '—';
+    document.getElementById("imf_bt").textContent = m[6] || '—';
+    document.getElementById("imf_bz").textContent = m[3] || '—';
+    document.getElementById("imf_by").textContent = m[2] || '—';
+    document.getElementById("pressure").textContent = p[7] || '—';
+    document.getElementById("kp").textContent = k[1] || '—';
+
+    document.getElementById("dst").textContent = "NOAA Dst realtime";
+    document.getElementById("ae").textContent = "Auroral activity active";
+    document.getElementById("proton_flux").textContent = "SWPC GOES";
+    document.getElementById("electron_flux").textContent = "SWPC GOES";
+
+    document.getElementById("storm").textContent =
+      kpVal >= 8 ? "G4–G5" :
+      kpVal >= 7 ? "G3" :
+      kpVal >= 6 ? "G2" :
+      kpVal >= 5 ? "G1" : "Quiet";
+
+    setAlert('sw_speed', parseFloat(p[2]) > 700 ? 'yellow' : parseFloat(p[2]) > 1000 ? 'red' : 'green');
+    setAlert('imf_bz', bz > -5 ? 'green' : bz > -10 ? 'yellow' : 'red');
+    setAlert('imf_bt', bt < 20 ? 'green' : bt < 30 ? 'yellow' : 'red');
+    setAlert('pressure', pressure < 5 ? 'green' : pressure < 10 ? 'yellow' : 'red');
+    setAlert('kp', kpVal < 4 ? 'green' : kpVal < 6 ? 'yellow' : 'red');
+    setAlert('storm', document.getElementById("storm").textContent === "Quiet" ? 'green' : document.getElementById("storm").textContent.includes("G1") || document.getElementById("storm").textContent.includes("G2") ? 'yellow' : 'red');
+
+    const xray = await fetch("https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json").then(r => r.json());
+    const latestXray = xray[xray.length - 1];
+    const flux = latestXray.flux;
+    const flareClass = classifyFlare(flux);
+    document.getElementById("flare_class").textContent = flareClass || '—';
+
+    const indices = await fetch("https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json").then(r => r.json());
+    const latestIndices = indices[indices.length - 1];
+    document.getElementById("f107").textContent = latestIndices.f10_7 || latestIndices["f10.7"] || '—';
+    document.getElementById("sunspot").textContent = latestIndices.ssn || '—';
+
+    const flares = await fetch("https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR").then(r => r.json());
+    const now = Date.now();
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const recentFlares = flares.filter(f => new Date(f.peakTime) > sevenDaysAgo);
+    const xFlares = recentFlares.filter(f => f.classType && f.classType.startsWith('X'));
+    document.getElementById("x_flares_count").textContent = xFlares.length;
+
+    if (xFlares.length > 0) {
+      const strongest = xFlares.reduce((max, f) => {
+        const val = parseFloat(f.classType.substring(1)) || 0;
+        const maxVal = parseFloat(max.classType.substring(1)) || 0;
+        return val > maxVal ? f : max;
+      });
+      document.getElementById("strongest_flare").textContent = strongest.classType + ` (${new Date(strongest.peakTime).toLocaleString()})`;
+    } else {
+      document.getElementById("strongest_flare").textContent = "None";
     }
-  });
 
-  // eBird
-  eBirdData.forEach(obs => {
-    const lat = obs.lat;
-    const lon = obs.lng;
-    const species = obs.comName;
-    L.circleMarker([lat, lon], {color:'orange', radius:5, fillOpacity:0.7})
-      .bindPopup(`<b>${species}</b><br>${obs.obsDt}`)
-      .addTo(markersLayer);
-    allPoints.push({time:new Date(obs.obsDt), source:'eBird'});
-  });
+    const flareLevel = flareClass.startsWith('C') ? 'green' : flareClass.startsWith('M') ? 'yellow' : flareClass.startsWith('X') ? 'red' : 'green';
+    setAlert('flare_class', flareLevel);
+    setAlert('x_flares_count', xFlares.length === 0 ? 'green' : xFlares.length <= 2 ? 'yellow' : 'red');
 
-  // --------------------
-  // Графік активності за останні 48 годин
-  // --------------------
-  const now = new Date();
-  const hours = Array.from({length:48}, (_,i)=> new Date(now.getTime() - i*60*60*1000));
-  const labels = hours.map(h=>`${h.getHours()}:00`);
-  const iNatCounts = hours.map(h => allPoints.filter(p=>p.source==='iNaturalist' && p.time >= h && p.time < new Date(h.getTime()+3600000)).length);
-  const eBirdCounts = hours.map(h => allPoints.filter(p=>p.source==='eBird' && p.time >= h && p.time < new Date(h.getTime()+3600000)).length);
-
-  if(activityChart){
-    activityChart.data.labels = labels.reverse();
-    activityChart.data.datasets[0].data = iNatCounts.reverse();
-    activityChart.data.datasets[1].data = eBirdCounts.reverse();
-    activityChart.update();
-  } else {
-    const ctx = document.getElementById('activityChart').getContext('2d');
-    activityChart = new Chart(ctx, {
-      type:'bar',
-      data:{
-        labels: labels.reverse(),
-        datasets:[
-          {label:'iNaturalist', data:iNatCounts.reverse(), backgroundColor:'lime'},
-          {label:'eBird', data:eBirdCounts.reverse(), backgroundColor:'orange'}
-        ]
-      },
-      options:{
-        responsive:true,
-        plugins:{legend:{position:'top'}},
-        scales:{x:{stacked:true}, y:{stacked:true}}
-      }
-    });
+    breathChart.update();
+  } catch (e) {
+    console.error("DATA ERROR", e);
   }
 }
 
-// --------------------
-// Автоматичне оновлення кожні 5 хвилин
-// --------------------
-updateData(); // стартове завантаження
-setInterval(updateData, 5*60*1000);
-</script>
+function classifyFlare(flux) {
+  if (typeof flux !== 'number' || flux <= 0) return '—';
+  if (flux >= 1e-4) return 'X' + (flux / 1e-4).toFixed(1);
+  if (flux >= 1e-5) return 'M' + (flux / 1e-5).toFixed(1);
+  if (flux >= 1e-6) return 'C' + (flux / 1e-6).toFixed(1);
+  if (flux >= 1e-7) return 'B' + (flux / 1e-7).toFixed(1);
+  return 'A' + (flux / 1e-8).toFixed(1);
+}
 
+updateData();
+setInterval(updateData, 60000);
+</script>
 </body>
 </html>
