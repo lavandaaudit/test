@@ -131,106 +131,99 @@ function setAlert(elementId, level) {
 }
 
 async function updateData() {
-  try {
-    const plasma = await fetch("https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json").then(r => r.json());
-    const mag = await fetch("https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json").then(r => r.json());
-    const kp = await fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json").then(r => r.json());
+    try {
+        const plasma = await fetch("https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json").then(r => r.json());
+        const mag = await fetch("https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json").then(r => r.json());
+        const kp = await fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json").then(r => r.json());
 
-    const p = plasma[plasma.length - 1];
-    const m = mag[mag.length - 1];
-    const k = kp[kp.length - 1];
+        const p = plasma[plasma.length-1];
+        const m = mag[mag.length-1];
+        const k = kp[kp.length-1];
 
-    const time = new Date().toLocaleTimeString();
+        const time = new Date().toLocaleTimeString();
 
-    labels.push(time);
-    if (labels.length > 30) { labels.shift(); dataBt.shift(); dataBz.shift(); dataPressure.shift(); dataKp.shift(); }
+        labels.push(time);
+        if(labels.length>30){ labels.shift(); dataBt.shift(); dataBz.shift(); dataPressure.shift(); dataKp.shift(); }
 
-    const bt = parseFloat(m[6]) || 0;
-    const bz = parseFloat(m[3]) || 0;
-    const pressure = parseFloat(p[7]) || 0;
-    const kpVal = parseFloat(k[1]) || 0;
+        const bt=parseFloat(m[6])||0;
+        const bz=parseFloat(m[3])||0;
+        const pressure=parseFloat(p[7])||0;
+        const kpVal=parseFloat(k[1])||0;
 
-    dataBt.push(bt);
-    dataBz.push(bz);
-    dataPressure.push(pressure);
-    dataKp.push(kpVal);
+        dataBt.push(bt);
+        dataBz.push(bz);
+        dataPressure.push(pressure);
+        dataKp.push(kpVal);
 
-    document.getElementById("sw_speed").textContent = p[2] || '—';
-    document.getElementById("sw_density").textContent = p[1] || '—';
-    document.getElementById("sw_temp").textContent = p[3] || '—';
-    document.getElementById("imf_bt").textContent = m[6] || '—';
-    document.getElementById("imf_bz").textContent = m[3] || '—';
-    document.getElementById("imf_by").textContent = m[2] || '—';
-    document.getElementById("pressure").textContent = p[7] || '—';
-    document.getElementById("kp").textContent = k[1] || '—';
-    document.getElementById("dst").textContent = "NOAA Dst realtime";
-    document.getElementById("ae").textContent = "Auroral activity active";
-    document.getElementById("proton_flux").textContent = "SWPC GOES";
-    document.getElementById("electron_flux").textContent = "SWPC GOES";
+        document.getElementById("sw_speed").textContent=p[2]||'—';
+        document.getElementById("sw_density").textContent=p[1]||'—';
+        document.getElementById("sw_temp").textContent=p[3]||'—';
+        document.getElementById("imf_bt").textContent=m[6]||'—';
+        document.getElementById("imf_bz").textContent=m[3]||'—';
+        document.getElementById("imf_by").textContent=m[2]||'—';
+        document.getElementById("pressure").textContent=p[7]||'—';
+        document.getElementById("kp").textContent=k[1]||'—';
 
-    document.getElementById("storm").textContent =
-      kpVal >= 8 ? "G4–G5" :
-      kpVal >= 7 ? "G3" :
-      kpVal >= 6 ? "G2" :
-      kpVal >= 5 ? "G1" : "Quiet";
+        document.getElementById("dst").textContent="NOAA Dst realtime";
+        document.getElementById("ae").textContent="Auroral activity active";
+        document.getElementById("proton_flux").textContent="SWPC GOES";
+        document.getElementById("electron_flux").textContent="SWPC GOES";
 
-    setAlert('sw_speed', parseFloat(p[2]) > 700 ? 'yellow' : parseFloat(p[2]) > 1000 ? 'red' : 'green');
-    setAlert('imf_bz', bz > -5 ? 'green' : bz > -10 ? 'yellow' : 'red');
-    setAlert('imf_bt', bt < 20 ? 'green' : bt < 30 ? 'yellow' : 'red');
-    setAlert('pressure', pressure < 5 ? 'green' : pressure < 10 ? 'yellow' : 'red');
-    setAlert('kp', kpVal < 4 ? 'green' : kpVal < 6 ? 'yellow' : 'red');
-    setAlert('storm', document.getElementById("storm").textContent === "Quiet" ? 'green' : document.getElementById("storm").textContent.includes("G1") || document.getElementById("storm").textContent.includes("G2") ? 'yellow' : 'red');
+        document.getElementById("storm").textContent=kpVal>=8?"G4–G5":kpVal>=7?"G3":kpVal>=6?"G2":kpVal>=5?"G1":"Quiet";
 
-    const xray = await fetch("https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json").then(r => r.json());
-    const latestXray = xray[xray.length - 1];
-    const flux = latestXray.flux;
-    const flareClass = classifyFlare(flux);
-    document.getElementById("flare_class").textContent = flareClass || '—';
+        setAlert('sw_speed',parseFloat(p[2])>700?'yellow':parseFloat(p[2])>1000?'red':'green');
+        setAlert('imf_bz',bz>-5?'green':bz>-10?'yellow':'red');
+        setAlert('imf_bt',bt<20?'green':bt<30?'yellow':'red');
+        setAlert('pressure',pressure<5?'green':pressure<10?'yellow':'red');
+        setAlert('kp',kpVal<4?'green':kpVal<6?'yellow':'red');
+        setAlert('storm',document.getElementById("storm").textContent==="Quiet"?'green':document.getElementById("storm").textContent.includes("G1")||document.getElementById("storm").textContent.includes("G2")?'yellow':'red');
 
-    const indices = await fetch("https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json").then(r => r.json());
-    const latestIndices = indices[indices.length - 1];
-    document.getElementById("f107").textContent = latestIndices.f10_7 || latestIndices["f10.7"] || '—';
-    document.getElementById("sunspot").textContent = latestIndices.ssn || '—';
+        const xray=await fetch("https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json").then(r=>r.json());
+        const latestXray=xray[xray.length-1];
+        const flux=latestXray.flux;
+        const flareClass=classifyFlare(flux);
+        document.getElementById("flare_class").textContent=flareClass||'—';
 
-    const flares = await fetch("https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR").then(r => r.json());
-    const now = Date.now();
-    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
-    const recentFlares = flares.filter(f => new Date(f.peakTime) > sevenDaysAgo);
-    const xFlares = recentFlares.filter(f => f.classType && f.classType.startsWith('X'));
-    document.getElementById("x_flares_count").textContent = xFlares.length;
+        const indices=await fetch("https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json").then(r=>r.json());
+        const latestIndices=indices[indices.length-1];
+        document.getElementById("f107").textContent=latestIndices.f10_7||latestIndices["f10.7"]||'—';
+        document.getElementById("sunspot").textContent=latestIndices.ssn||'—';
 
-    if (xFlares.length > 0) {
-      const strongest = xFlares.reduce((max, f) => {
-        const val = parseFloat(f.classType.substring(1)) || 0;
-        const maxVal = parseFloat(max.classType.substring(1)) || 0;
-        return val > maxVal ? f : max;
-      });
-      document.getElementById("strongest_flare").textContent = strongest.classType + ` (${new Date(strongest.peakTime).toLocaleString()})`;
-    } else {
-      document.getElementById("strongest_flare").textContent = "None";
-    }
+        const flares=await fetch("https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR").then(r=>r.json());
+        const now=Date.now();
+        const sevenDaysAgo=now-7*24*60*60*1000;
+        const recentFlares=flares.filter(f=>new Date(f.peakTime)>sevenDaysAgo);
+        const xFlares=recentFlares.filter(f=>f.classType&&f.classType.startsWith('X'));
+        document.getElementById("x_flares_count").textContent=xFlares.length;
 
-    const flareLevel = flareClass.startsWith('C') ? 'green' : flareClass.startsWith('M') ? 'yellow' : flareClass.startsWith('X') ? 'red' : 'green';
-    setAlert('flare_class', flareLevel);
-    setAlert('x_flares_count', xFlares.length === 0 ? 'green' : xFlares.length <= 2 ? 'yellow' : 'red');
+        if(xFlares.length>0){
+            const strongest=xFlares.reduce((max,f)=>{
+                const val=parseFloat(f.classType.substring(1))||0;
+                const maxVal=parseFloat(max.classType.substring(1))||0;
+                return val>maxVal?f:max;
+            });
+            document.getElementById("strongest_flare").textContent=strongest.classType+` (${new Date(strongest.peakTime).toLocaleString()})`;
+        } else { document.getElementById("strongest_flare").textContent="None"; }
 
-    breathChart.update();
-  } catch (e) {
-    console.error("DATA ERROR", e);
-  }
+        const flareLevel=flareClass.startsWith('C')?'green':flareClass.startsWith('M')?'yellow':flareClass.startsWith('X')?'red':'green';
+        setAlert('flare_class',flareLevel);
+        setAlert('x_flares_count',xFlares.length===0?'green':xFlares.length<=2?'yellow':'red');
+
+        breathChart.update();
+    } catch(e){ console.error("DATA ERROR",e); }
 }
 
-function classifyFlare(flux) {
-  if (typeof flux !== 'number' || flux <= 0) return '—';
-  if (flux >= 1e-4) return 'X' + (flux / 1e-4).toFixed(1);
-  if (flux >= 1e-5) return 'M' + (flux / 1e-5).toFixed(1);
-  if (flux >= 1e-6) return 'C' + (flux / 1e-6).toFixed(1);
-  if (flux >= 1e-7) return 'B' + (flux / 1e-7).toFixed(1);
-  return 'A' + (flux / 1e-8).toFixed(1);
+function classifyFlare(flux){
+    if(typeof flux!=='number'||flux<=0) return '—';
+    if(flux>=1e-4) return 'X'+(flux/1e-4).toFixed(1);
+    if(flux>=1e-5) return 'M'+(flux/1e-5).toFixed(1);
+    if(flux>=1e-6) return 'C'+(flux/1e-6).toFixed(1);
+    if(flux>=1e-7) return 'B'+(flux/1e-7).toFixed(1);
+    return 'A'+(flux/1e-8).toFixed(1);
 }
 
 updateData();
-setInterval(updateData, 60000);
+setInterval(updateData,60000);
 </script>
 </body>
 </html>
