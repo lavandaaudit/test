@@ -2,136 +2,326 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>ibonarium.stability.human.lab.live</title>
+<title>REAL-TIME PHYSICS · GEOMETRY MONITOR</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-html,body{width:100%;height:100%;background:#000;color:#cfefff;font-family:Inter,system-ui,monospace;overflow:auto;}
-.wrapper{width:100%;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:8px 0;}
-.panel{width:96%;max-width:1400px;display:flex;flex-direction:row;gap:18px;}
-.left{width:40%;border:1px solid #0ff3;padding:14px;overflow-y:auto;min-height:500px;}
-.left h2{font-size:19.8px;margin-bottom:12.6px;text-align:center;color:#7fffd4;}
-.indicator{margin-bottom:8px;font-size:14.4px;line-height:1.3;display:flex;justify-content:space-between;align-items:center;}
-.indicator .label{opacity:0.9;}
-.indicator .value{font-weight:bold;min-width:110px;text-align:right;padding:3px 7px;border-radius:4px;transition:background-color 0.5s;}
-.right{width:60%;border:1px solid #0ff3;padding:14px;display:flex;flex-direction:column;gap:14px;}
-.chart-container{flex:0.8;min-height:180px;}
-.magnetometer-container{flex:1.2;min-height:240px;position:relative;}
-.spectrogram-container{flex:2;min-height:420px;position:relative;}
-iframe{width:100%;height:100%;border:none;filter:contrast(115%) brightness(110%);background:#000;position:absolute;top:0;left:0;}
-@media(max-width:1024px){.panel{flex-direction:column;}.left,.right{width:100%;}.chart-container{min-height:250px;}.spectrogram-container{min-height:500px;}}
-@media(max-width:768px){.wrapper{padding:6px;}.panel{gap:12px;}.left{padding:12px;}.left h2{font-size:18px;}.indicator{font-size:13.5px;margin-bottom:7px;}.right{padding:12px;}.chart-container{min-height:200px;}.spectrogram-container{min-height:450px;}iframe{transform:scale(0.90);transform-origin:top left;}}
-@media(max-width:480px){.left h2{font-size:16.2px;}.indicator{font-size:12.6px;flex-direction:column;align-items:flex-start;}.indicator .value{margin-top:4px;text-align:left;}.left,.right{padding:9px;}.chart-container{min-height:180px;}.spectrogram-container{min-height:400px;}iframe{transform:scale(0.85);transform-origin:top left;}}
+  html, body {
+    margin: 0; padding: 0;
+    background: #0a0a0a;
+    overflow: hidden;
+    height: 100%;
+    font-family: 'Courier New', monospace;
+    color: #0ff;
+  }
+  #container {
+    position: absolute;
+    inset: 60px;
+    border: 1px solid #1a1a2e;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: #000;
+  }
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #hud {
+    position: absolute;
+    top: 20px; left: 20px;
+    font-size: 12px;
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 10;
+  }
+  #data {
+    position: absolute;
+    top: 90px; left: 20px;
+    font-size: 10px;
+    opacity: 0.55;
+    pointer-events: none;
+    max-width: 320px;
+    line-height: 1.35;
+    z-index: 10;
+  }
+  #data span.val { color: #fff; }
 </style>
 </head>
 <body>
-<div class="wrapper">
-<div class="panel">
-<!-- LEFT -->
-<div class="left">
-<h2>ibonarium.solar.stability.lab.live</h2>
-<div class="indicator"><span class="label">Solar Wind Speed (km/s):</span> <span id="sw_speed" class="value">—</span></div>
-<div class="indicator"><span class="label">Solar Wind Density (/cc):</span> <span id="sw_density" class="value">—</span></div>
-<div class="indicator"><span class="label">Solar Wind Temperature (K):</span> <span id="sw_temp" class="value">—</span></div>
-<div class="indicator"><span class="label">IMF Bt – Total Magnetic Field (nT):</span> <span id="imf_bt" class="value">—</span></div>
-<div class="indicator"><span class="label">IMF Bz (nT):</span> <span id="imf_bz" class="value">—</span></div>
-<div class="indicator"><span class="label">IMF By (nT):</span> <span id="imf_by" class="value">—</span></div>
-<div class="indicator"><span class="label">Solar Wind Dynamic Pressure (nPa):</span> <span id="pressure" class="value">—</span></div>
-<div class="indicator"><span class="label">Proton Flux &gt;10 MeV:</span> <span id="proton_flux" class="value">—</span></div>
-<div class="indicator"><span class="label">Electron Flux &gt;2 MeV:</span> <span id="electron_flux" class="value">—</span></div>
-<div class="indicator"><span class="label">Kp Index:</span> <span id="kp" class="value">—</span></div>
-<div class="indicator"><span class="label">Dst Index (nT):</span> <span id="dst" class="value">—</span></div>
-<div class="indicator"><span class="label">AE Index (Auroral Electrojet):</span> <span id="ae" class="value">—</span></div>
-<div class="indicator"><span class="label">Geomagnetic Storm Level (G1–G5):</span> <span id="storm" class="value">—</span></div>
 
-<h2 style="margin-top:24px; font-size:16.2px;">ibonarium.solar.flare.activity.lab.live</h2>
-<div class="indicator"><span class="label">Latest GOES X-Ray Flux Class:</span> <span id="flare_class" class="value">—</span></div>
-<div class="indicator"><span class="label">Recent X-class Flares (last 7 days):</span> <span id="x_flares_count" class="value">—</span></div>
-<div class="indicator"><span class="label">Strongest Recent Flare:</span> <span id="strongest_flare" class="value">—</span></div>
-<div class="indicator"><span class="label">F10.7 cm Radio Flux (sfu):</span> <span id="f107" class="value">—</span></div>
-<div class="indicator"><span class="label">Sunspot Number (SIDC):</span> <span id="sunspot" class="value">—</span></div>
-</div>
-<!-- RIGHT -->
-<div class="right">
-<div class="chart-container"><canvas id="breathChart"></canvas></div>
-<!-- Динамічний магнітометр -->
-<div class="magnetometer-container"><canvas id="magChart"></canvas></div>
-<!-- Орфей -->
-<div class="spectrogram-container">
-<iframe src="https://realtime.obs-nancay.fr/orfees/" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin"></iframe>
-</div>
-</div>
-</div>
+<div id="hud">REAL-TIME PHYSICS · GEOMETRY MONITOR</div>
+<div id="data">Завантаження...</div>
+
+<div id="container">
+  <canvas id="c"></canvas>
 </div>
 
 <script>
-const labels=[]; const dataBt=[]; const dataBz=[]; const dataPressure=[]; const dataKp=[];
-const ctx=document.getElementById('breathChart').getContext('2d');
-const breathChart=new Chart(ctx,{type:'line',data:{labels:labels,datasets:[
-{label:'IMF Bt (nT)',data:dataBt,borderColor:'#0ff',backgroundColor:'rgba(0,255,255,0.1)',borderWidth:2,tension:0.4},
-{label:'IMF Bz (nT)',data:dataBz,borderColor:'#f0f',backgroundColor:'rgba(255,0,255,0.1)',borderWidth:2,tension:0.4},
-{label:'Dynamic Pressure (nPa)',data:dataPressure,borderColor:'#ff0',backgroundColor:'rgba(255,255,0,0.1)',borderWidth:2,tension:0.4},
-{label:'Kp Index',data:dataKp,borderColor:'#0f0',backgroundColor:'rgba(0,255,0,0.1)',borderWidth:2,tension:0.4}
-]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#9ff'},grid:{color:'#033'}},y:{ticks:{color:'#9ff'},grid:{color:'#033'}}},plugins:{legend:{labels:{color:'#cff'}}}}});
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const dataDiv = document.getElementById('data');
 
-const magCtx=document.getElementById('magChart').getContext('2d');
-const magLabels=[]; const dataBx=[]; const dataBy=[]; const dataBzMag=[];
-const magChart=new Chart(magCtx,{type:'line',data:{labels:magLabels,datasets:[
-{label:'Bx (nT)',data:dataBx,borderColor:'#ff0',backgroundColor:'rgba(255,255,0,0.1)',borderWidth:2,tension:0.4},
-{label:'By (nT)',data:dataBy,borderColor:'#0ff',backgroundColor:'rgba(0,255,255,0.1)',borderWidth:2,tension:0.4},
-{label:'Bz (nT)',data:dataBzMag,borderColor:'#f0f',backgroundColor:'rgba(255,0,255,0.1)',borderWidth:2,tension:0.4}
-]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#9ff'},grid:{color:'#033'}},y:{ticks:{color:'#9ff'},grid:{color:'#033'}}},plugins:{legend:{labels:{color:'#cff'}}}}});
+function resize() {
+  const container = document.getElementById('container');
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
 
-function setAlert(id,level){const el=document.getElementById(id); if(!el)return; el.className='value';
-if(level==='green')el.style.backgroundColor='rgba(0,255,0,0.2)';
-else if(level==='yellow')el.style.backgroundColor='rgba(255,255,0,0.2)';
-else if(level==='red')el.style.backgroundColor='rgba(255,0,0,0.3)';
-else el.style.backgroundColor='transparent';
+// Масштабування вмісту
+const SCALE = 0.65;
+const OFFSET_X = canvas.width * (1 - SCALE) / 2;
+const OFFSET_Y = canvas.height * (1 - SCALE) / 2;
+
+// Зірки
+const stars = [];
+for (let i = 0; i < 300; i++) {
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 1.2 + 0.3,
+    speed: Math.random() * 0.04 + 0.01
+  });
 }
 
-async function updateData(){
-try{
-const plasma=await fetch("https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json").then(r=>r.json());
-const mag=await fetch("https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json").then(r=>r.json());
-const kp=await fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json").then(r=>r.json());
-const p=plasma[plasma.length-1]; const m=mag[mag.length-1]; const k=kp[kp.length-1];
-const time=new Date().toLocaleTimeString();
-labels.push(time); magLabels.push(time);
-if(labels.length>30){labels.shift();dataBt.shift();dataBz.shift();dataPressure.shift();dataKp.shift();}
-if(magLabels.length>30){magLabels.shift();dataBx.shift();dataBy.shift();dataBzMag.shift();}
+// Дані та API
+let realData = {
+  seismic: 0.5, magnetic: 0.5, atmosphere_wind: 0.5,
+  atmosphere_pressure: 0.5, atmosphere_temp: 0.5,
+  ocean: 0.5, solar_radiation: 0.5, solar_wind: 0.5,
+  precipitation: 0.5, chaos: 0.5
+};
+let dataHistory = {};
+Object.keys(realData).forEach(k => dataHistory[k] = []);
 
-const bt=parseFloat(m[6])||0; const bz=parseFloat(m[3])||0; const pressure=parseFloat(p[7])||0; const kpVal=parseFloat(k[1])||0;
-dataBt.push(bt); dataBz.push(bz); dataPressure.push(pressure); dataKp.push(kpVal);
-dataBx.push(parseFloat(m[1])||0); dataBy.push(parseFloat(m[2])||0); dataBzMag.push(bz);
+const LAT = 50.45, LON = 30.52;
+const API = {
+  weather: `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,pressure_msl,wind_speed_10m,precipitation`,
+  ocean: `https://api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=wave_height`,
+  seismic: 'https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=now-1h&minmagnitude=2.5',
+  magnetic: 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json',
+  solar_wind: 'https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json',
+  radiation: `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=shortwave_radiation`
+};
 
-document.getElementById("sw_speed").textContent=p[2]||'—';
-document.getElementById("sw_density").textContent=p[1]||'—';
-document.getElementById("sw_temp").textContent=p[3]||'—';
-document.getElementById("imf_bt").textContent=m[6]||'—';
-document.getElementById("imf_bz").textContent=m[3]||'—';
-document.getElementById("imf_by").textContent=m[2]||'—';
-document.getElementById("pressure").textContent=p[7]||'—';
-document.getElementById("kp").textContent=k[1]||'—';
-document.getElementById("dst").textContent="NOAA Dst realtime";
-document.getElementById("ae").textContent="Auroral activity active";
-document.getElementById("proton_flux").textContent="SWPC GOES";
-document.getElementById("electron_flux").textContent="SWPC GOES";
-document.getElementById("storm").textContent=kpVal>=8?"G4–G5":kpVal>=7?"G3":kpVal>=6?"G2":kpVal>=5?"G1":"Quiet";
+async function updateRealData() {
+  try {
+    const w = await fetch(API.weather).then(r => r.json()).then(d => d.current);
+    realData.atmosphere_temp = Math.min(1, (w.temperature_2m + 40) / 80);
+    realData.atmosphere_pressure = Math.min(1, Math.abs(w.pressure_msl - 1013) / 50);
+    realData.atmosphere_wind = Math.min(1, w.wind_speed_10m / 50);
+    realData.precipitation = Math.min(1, w.precipitation / 10);
 
-setAlert('sw_speed',parseFloat(p[2])>700?'yellow':parseFloat(p[2])>1000?'red':'green');
-setAlert('imf_bz',bz>-5?'green':bz>-10?'yellow':'red');
-setAlert('imf_bt',bt<20?'green':bt<30?'yellow':'red');
-setAlert('pressure',pressure<5?'green':pressure<10?'yellow':'red');
-setAlert('kp',kpVal<4?'green':kpVal<6?'yellow':'red');
-setAlert('storm',document.getElementById("storm").textContent==="Quiet"?'green':document.getElementById("storm").textContent.includes("G1")||document.getElementById("storm").textContent.includes("G2")?'yellow':'red');
+    realData.ocean = await fetch(API.ocean).then(r => r.json()).then(d => Math.min(1, d.current.wave_height / 5)).catch(() => 0.5);
+    realData.solar_radiation = await fetch(API.radiation).then(r => r.json()).then(d => Math.min(1, d.current.shortwave_radiation / 1000)).catch(() => 0.5);
+    realData.seismic = await fetch(API.seismic).then(r => r.json()).then(d => Math.min(1, d.features.length / 20)).catch(() => 0.5);
+    realData.magnetic = await fetch(API.magnetic).then(r => r.json()).then(d => parseFloat(d.at(-1)[1]) / 9).catch(() => 0.5);
+    realData.solar_wind = await fetch(API.solar_wind).then(r => r.json()).then(d => Math.min(1, (parseFloat(d.at(-1)[3]) - 300) / 700)).catch(() => 0.5);
 
-breathChart.update(); magChart.update();
-}catch(e){console.error("DATA ERROR",e);}
+    Object.keys(realData).forEach(k => {
+      if (k !== 'chaos') {
+        dataHistory[k].push(realData[k]);
+        if (dataHistory[k].length > 60) dataHistory[k].shift();
+      }
+    });
+    let vars = [];
+    for (let k in dataHistory) {
+      const h = dataHistory[k];
+      if (h.length < 3) continue;
+      const m = h.reduce((a, b) => a + b, 0) / h.length;
+      const v = h.reduce((a, b) => a + (b - m) ** 2, 0) / h.length;
+      vars.push(Math.sqrt(v));
+    }
+    realData.chaos = vars.length ? Math.min(1, (vars.reduce((a, b) => a + b, 0) / vars.length) * 10) : 0.5;
+
+    dataDiv.innerHTML = `
+      magnetic ...... <span class="val">${(realData.magnetic * 9).toFixed(1)}</span><br>
+      solar_wind .... <span class="val">${Math.round(300 + realData.solar_wind * 700)}</span> km/s<br>
+      seismic ....... <span class="val">${Math.round(realData.seismic * 20)}</span> eq/h<br>
+      wind .......... <span class="val">${Math.round(realData.atmosphere_wind * 50)}</span> km/h<br>
+      pressure dev .. <span class="val">${Math.round(realData.atmosphere_pressure * 50)}</span> hPa<br>
+      temp .......... <span class="val">${((realData.atmosphere_temp * 80) - 40).toFixed(1)}</span> °C<br>
+      ocean ......... <span class="val">${(realData.ocean * 5).toFixed(1)}</span> m<br>
+      radiation ..... <span class="val">${Math.round(realData.solar_radiation * 1000)}</span> W/m²<br>
+      precip ........ <span class="val">${(realData.precipitation * 10).toFixed(1)}</span> mm<br>
+      CHAOS ......... <span class="val">${realData.chaos.toFixed(3)}</span>
+    `;
+  } catch (e) {
+    dataDiv.innerHTML = "Дані недоступні";
+  }
+}
+updateRealData();
+setInterval(updateRealData, 60000);
+
+// ─── Частинки для кожного параметра ───────────────────────
+class Particle {
+  constructor(x, y, type) {
+    this.x = x;
+    this.y = y;
+    this.type = type;
+    this.life = 1;
+    this.vx = (Math.random() - 0.5) * 1.5;
+    this.vy = (Math.random() - 0.5) * 1.5;
+    this.color = getColor(type);
+    this.size = 2;
+  }
+  update(cx, cy, d) {
+    this.life -= 0.008 + d.chaos * 0.005;  // chaos прискорює зникнення
+
+    const dx = cx - this.x;
+    const dy = cy - this.y;
+    const dist = Math.hypot(dx, dy) || 1;
+
+    const force = d[this.type] * 0.03;
+
+    switch (this.type) {
+      case 'magnetic':
+        this.vx += dx / dist * force * 2;    // притягує до центру
+        this.vy += dy / dist * force * 2;
+        break;
+      case 'solar_wind':
+        this.vx += force * 4;                 // сильний рух праворуч
+        break;
+      case 'seismic':
+        this.vx += (Math.random() - 0.5) * force * 6;  // хаотичний розліт
+        this.vy += (Math.random() - 0.5) * force * 6;
+        break;
+      case 'atmosphere_wind':
+        this.vx += force * 3 * Math.sin(t * 3);  // коливання
+        break;
+      case 'atmosphere_pressure':
+        this.size = 2 + force * 8;            // пульсує розмір
+        break;
+      case 'atmosphere_temp':
+        this.vy -= force * 2.5;               // піднімається вгору при теплі
+        break;
+      case 'ocean':
+        this.vy += Math.sin(t * 2 + this.x * 0.01) * force * 2;  // хвилі
+        break;
+      case 'solar_radiation':
+        this.vx += (Math.random() - 0.5) * force * 5;
+        this.vy += (Math.random() - 0.5) * force * 5;  // випадковий розліт
+        break;
+      case 'precipitation':
+        this.vy += force * 5;                 // падають вниз
+        break;
+      case 'chaos':
+        this.vx += (Math.random() - 0.5) * force * 8;
+        this.vy += (Math.random() - 0.5) * force * 8;  // повний хаос
+        break;
+    }
+
+    this.x += this.vx;
+    this.y += this.vy;
+  }
+  draw() {
+    ctx.globalAlpha = this.life;
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+  }
 }
 
-updateData(); setInterval(updateData,60000);
+const particles = [];
+
+function getColor(type) {
+  const map = {
+    magnetic: '#00ffff',
+    solar_wind: '#ffaa00',
+    seismic: '#ff4444',
+    atmosphere_wind: '#88ff88',
+    atmosphere_pressure: '#ff88ff',
+    atmosphere_temp: '#ffbb66',
+    ocean: '#4488ff',
+    solar_radiation: '#ffff88',
+    precipitation: '#88ccff',
+    chaos: '#ff00ff'
+  };
+  return map[type] || '#cccccc';
+}
+
+// ─── Основний цикл ───────────────────────
+let t = 0;
+function loop() {
+  t += 0.016;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.translate(OFFSET_X, OFFSET_Y);
+  ctx.scale(SCALE, SCALE);
+
+  const cx = canvas.width / 2 / SCALE;
+  const cy = canvas.height / 2 / SCALE;
+  const d = realData;
+
+  // Генерація частинок — чим вище значення, тим більше частинок
+  Object.keys(d).forEach(key => {
+    if (key === 'chaos') return;
+    const chance = d[key] * 0.08 + 0.005;  // базова ймовірність + залежність від значення
+    if (Math.random() < chance) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 60 + Math.random() * 180;
+      const px = cx + Math.cos(angle) * dist;
+      const py = cy + Math.sin(angle) * dist;
+      particles.push(new Particle(px, py, key));
+    }
+  });
+
+  // Оновлення та малювання
+  particles.forEach(p => {
+    p.update(cx, cy, d);
+    p.draw();
+  });
+
+  // Видалення мертвих частинок
+  for (let i = particles.length - 1; i >= 0; i--) {
+    if (particles[i].life <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+
+  // Зірки
+  ctx.fillStyle = '#0ff';
+  stars.forEach(s => {
+    s.y += s.speed * (1 + d.solar_wind * 3);
+    if (s.y > canvas.height / SCALE + 30) s.y -= canvas.height / SCALE + 60;
+    ctx.globalAlpha = 0.4 + d.solar_wind * 0.35;
+    ctx.fillRect(s.x, s.y, s.size, s.size);
+  });
+  ctx.globalAlpha = 1;
+
+  // ─── решта твоєї геометрії ───
+  // 1. Концентричні кола (magnetic)
+  for (let i = 1; i <= 5; i++) {
+    const r = 40 + i * 25 + Math.sin(t * 1.3 + i * 1.6) * (5 + d.magnetic * 20);
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(0,180,255,${0.15 + d.magnetic * 0.3})`;
+    ctx.lineWidth = (0.8 + d.chaos * 1.2) / SCALE;
+    ctx.stroke();
+  }
+
+  // 2. Сейсмічні хвилі
+  if (d.seismic > 0.25) {
+    const rings = Math.floor(d.seismic * 6) + 1;
+    for (let i = 0; i < rings; i++) {
+      const r = (t * 50 + i * 70) % 450;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,50,50,${0.4 * d.seismic * (1 - r / 450)})`;
+      ctx.lineWidth = 1.3 / SCALE;
+      ctx.stroke();
+    }
+  }
+
+  // (тут можна додати решту твоїх геометричних елементів — вітер, океан, опади, температура, радіація — як було раніше)
+
+  ctx.restore();
+
+  requestAnimationFrame(loop);
+}
+loop();
 </script>
 </body>
 </html>
